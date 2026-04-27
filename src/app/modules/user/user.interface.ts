@@ -1,5 +1,5 @@
 import { Document, Model, Types } from 'mongoose';
-import { TProvider, TUserRole } from './user.constant';
+import { TProvider, TUserRole, TUserStatus } from './user.constant';
 
 
 export type TProfileImage = {
@@ -21,28 +21,21 @@ export interface IUser extends Document {
   avatar?: string;
   password: string;
   passwordChangedAt?: Date;
-  passwordResetOtp?: string;
-  passwordResetExpiry?: Date;
-  isOtpVerified?: boolean;
   verification: {
     emailVerifiedAt: Date | null;
     phoneVerifiedAt: Date | null;
-  },
-  verificationOtp?: string;
-  verificationOtpExpiry?: Date;
+  };
   role: TUserRole;
   provider?: TProvider;
   isSocialLogin: boolean;
-  isActive: boolean;
-  isDeleted: boolean;
+  status: TUserStatus;
+  disabledAt: Date | null;
   deletedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 
   // Instance methods
   isPasswordMatched(plainTextPassword: string): Promise<boolean>;
-  isVerificationOtpMatched(plainTextOtp: string): Promise<boolean>;
-  isResetPasswordOtpMatched(plainTextOtp: string): Promise<boolean>;
   isJWTIssuedBeforePasswordChanged(jwtIssuedTimestamp: number | undefined): boolean;
 }
 

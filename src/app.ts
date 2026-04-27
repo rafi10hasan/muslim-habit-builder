@@ -1,4 +1,3 @@
-import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -58,7 +57,6 @@ if (config.node_env !== 'test') {
   app.use(errorHandler);
 }
 
-app.use(cookieParser());
 app.use(compression(compressionOptions));
 app.use(helmetConfig);
 app.use('/v1/uploads', express.static(path.join('uploads')));

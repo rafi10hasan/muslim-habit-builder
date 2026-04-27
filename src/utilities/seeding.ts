@@ -1,5 +1,5 @@
 
-import { USER_ROLE } from '../app/modules/user/user.constant';
+import { USER_ROLE, USER_STATUS } from '../app/modules/user/user.constant';
 import User from '../app/modules/user/user.model';
 import config from '../config';
 import { randomUserImage } from './randomUserImage';
@@ -7,10 +7,13 @@ import { randomUserImage } from './randomUserImage';
 const adminData = {
   fullName: 'ADMIN',
   role: USER_ROLE.SUPER_ADMIN,
-  email: "rafayet12837@gmail.com", //config.gmail_app_user,
+  email: config.admin_email,
   password: config.admin_password,
   avatar: randomUserImage(),
-  isEmailVerified: true,
+  verification: {
+    emailVerifiedAt: new Date(),
+  },
+  status: USER_STATUS.ACTIVE
 };
 
 const seedingAdmin = async () => {
