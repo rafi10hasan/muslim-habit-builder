@@ -38,6 +38,8 @@ const loginAuthSchema = z.object({
     },
   }).optional(),
 
+  isRemembered: z.boolean().optional(),
+
 });
 
 const verifyEmailByOtpSchema = z.object({

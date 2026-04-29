@@ -77,9 +77,9 @@ authRouter.post(
   authController.resetForgetPassword,
 );
 
-authRouter.post(
+authRouter.patch(
   '/change-password',
-  authMiddleware(USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+  authMiddleware(USER_ROLE.USER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
   validateRequest({
     body: authValidationZodSchema.changePasswordSchema,
   }),

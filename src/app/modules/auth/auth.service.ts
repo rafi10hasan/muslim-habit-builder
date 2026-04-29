@@ -24,7 +24,8 @@ const loginWithCredential = async (credential: TLoginPayload) => {
 
   const user = await userRepository.findByEmail(email);
   if (!user) throw new UnauthorizedError('user not found with this email');
-
+  
+  console.log(user)
   if (user.deletedAt) {
     throw new UnauthorizedError('This account has been deleted. if you want to restore this account, create account with same email again');
   }
@@ -60,6 +61,7 @@ const loginWithCredential = async (credential: TLoginPayload) => {
   const JwtPayload: jwtPayload = {
     id: user._id.toString(),
     role: user.role,
+    isRemembered: credential.isRemembered || false,
   };
   const tokens = await jwtHelpers.generateTokens(JwtPayload);
 
@@ -70,6 +72,7 @@ const loginWithCredential = async (credential: TLoginPayload) => {
 // authentication with Google
 const loginWithOAuth = async (credential: socialLoginPayload) => {
   const { provider, token } = credential;
+  
   let payload;
   if (provider === 'google') {
     const ticket = await googleClient.verifyIdToken({

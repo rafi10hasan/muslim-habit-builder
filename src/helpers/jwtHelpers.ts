@@ -2,8 +2,8 @@
 import jwt, { JwtPayload, Secret, SignOptions } from 'jsonwebtoken';
 import { BadRequestError } from '../app/errors/request/apiError';
 
-import config from '../config';
 import { SessionModel } from '../app/modules/session/session.model';
+import config from '../config';
 
 
 // verify jwt token
@@ -17,12 +17,16 @@ const generateTokens = async (payload: JwtPayload) => {
   const accessTokenExpiresIn = config.jwt_access_token_expiresin as SignOptions['expiresIn'];
   const refreshTokenExpiresIn = config.jwt_refresh_token_expiresin as SignOptions['expiresIn'];
 
+  const isRemembered = payload.isRemembered || false;
+  const adjustedRefreshTokenExpiresIn = isRemembered ? '20d' : refreshTokenExpiresIn;
+  const adjustedAccessTokenExpiresIn = isRemembered ? '10d' : accessTokenExpiresIn;
   const accessToken = jwt.sign(payload, config.jwt_access_token_secret!, {
-    expiresIn: accessTokenExpiresIn,
+    expiresIn: adjustedAccessTokenExpiresIn,
   });
-
+  
+  console.log(accessToken)
   const refreshToken = jwt.sign(payload, config.jwt_refresh_token_secret!, {
-    expiresIn: refreshTokenExpiresIn,
+    expiresIn: adjustedRefreshTokenExpiresIn,
   });
 
   const decoded = jwt.decode(refreshToken) as JwtPayload;
@@ -32,11 +36,11 @@ const generateTokens = async (payload: JwtPayload) => {
 
   await SessionModel.findOneAndUpdate(
     { user: payload.id },
-    { refreshToken: refreshToken, expiresAt: decoded.exp * 1000, sessionId: payload.sessionId, lastLoginAt: new Date()},
+    { refreshToken: refreshToken, expiresAt: decoded.exp * 1000, sessionId: payload.sessionId, lastLoginAt: new Date() },
     { upsert: true, new: true },
   );
 
-  return { accessToken, refreshToken, sessionId:payload.sessionId };
+  return { accessToken, refreshToken, sessionId: payload.sessionId };
 };
 
 // create token

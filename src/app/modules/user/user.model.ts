@@ -5,7 +5,6 @@ import { USER_ROLE } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
 
 
-
 export const userSchema = new Schema<IUser>(
   {
     email: {
@@ -25,7 +24,7 @@ export const userSchema = new Schema<IUser>(
     password: {
       type: String,
       required: true,
-      select: false
+
     },
     passwordChangedAt: {
       type: Date,
@@ -81,14 +80,6 @@ userSchema.statics.isUserExistsByEmail = async function (email: string): Promise
 // isPasswordMatched
 userSchema.methods.isPasswordMatched = async function (plainTextPassword: string): Promise<boolean> {
   return await bcrypt.compare(plainTextPassword, this.password);
-};
-
-userSchema.methods.isVerificationOtpMatched = async function (plainTextOtp: string): Promise<boolean> {
-  return await bcrypt.compare(plainTextOtp, this.verificationOtp);
-};
-
-userSchema.methods.isResetPasswordOtpMatched = async function (plainTextOtp: string): Promise<boolean> {
-  return await bcrypt.compare(plainTextOtp, this.passwordResetOtp);
 };
 
 // isJWTIssuedBeforePasswordChanged
