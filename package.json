@@ -1,5 +1,5 @@
 {
-  "name": "dating-app-backend",
+  "name": "muslim-habit-builder",
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
@@ -30,6 +30,7 @@
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.12.33",
+    "moment-timezone": "^0.6.2",
     "mongoose": "^9.5.0",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",

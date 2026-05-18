@@ -51,6 +51,22 @@ const createAuthSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number')
     .regex(/[@$!%*?&#]/, 'Password must contain at least one special character'),
 
+  timezone: z.string({
+    error: (issue) => {
+      if (issue.input === undefined) return 'Timezone is required';
+      if (typeof issue.input !== 'string') return 'Timezone must be a string';
+      return 'Invalid timezone format';
+    },
+  }),
+
+  fcmToken: z.string({
+    error: (issue) => {
+      if (issue.input === undefined) return 'FCM token is required';
+      if (typeof issue.input !== 'string') return 'FCM token must be a string';
+      return 'Invalid FCM token format';
+    },
+  }),
+
 });
 
 const createSocialAuthSchema = z.object({

@@ -27,6 +27,7 @@ export interface IUser extends Document {
   };
   role: TUserRole;
   provider?: TProvider;
+  timezone?: string | null;
   isSocialLogin: boolean;
   status: TUserStatus;
   disabledAt: Date | null;

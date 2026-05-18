@@ -13,6 +13,9 @@ userRouter.post(
   userController.createAccountIntoDb,
 );
 
-
+userRouter.post(
+  '/create-guest',
+  userController.createGuestAccountIntoDb,
+);
 
 export default userRouter;

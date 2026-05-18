@@ -1,7 +1,7 @@
 import rateLimit from 'express-rate-limit';
 
 export const otpRateLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, 
+  windowMs: 3 * 60 * 1000, 
   limit: 5,
   keyGenerator: (req) => {
     const ip = req.ip?.replace('::ffff:', '') ?? 'unknown';
@@ -11,7 +11,7 @@ export const otpRateLimiter = rateLimit({
 
   message: {
     statusCode: 429,
-    succes: false,
+    success: false,
     error: 'Too Many OTP Requests',
     message: 'You have requested too many OTPs. Please try again later.',
   },

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import mongoose, { Schema } from 'mongoose';
 import config from '../../../config';
-import { USER_ROLE } from './user.constant';
+import { PROVIDER, USER_ROLE, USER_STATUS } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
 
 
@@ -20,11 +20,11 @@ export const userSchema = new Schema<IUser>(
     },
     avatar: {
       type: String,
+      default: null
     },
     password: {
       type: String,
-      required: true,
-
+      required: false,
     },
     passwordChangedAt: {
       type: Date,
@@ -41,16 +41,21 @@ export const userSchema = new Schema<IUser>(
     },
     provider: {
       type: String,
-      enum: ['google', 'facebook', 'github'],
+      enum: Object.values(PROVIDER),
+      default: null
     },
     isSocialLogin: {
       type: Boolean,
       default: false,
     },
+    timezone: {
+      type: String,
+      default: null
+    },
     status: {
       type: String,
-      enum: ['pending', 'active', 'blocked', 'disabled'],
-      default: 'pending',
+      enum: Object.values(USER_STATUS),
+      default: USER_STATUS.ACTIVE,
     },
     disabledAt: {
       type: Date,
@@ -61,7 +66,7 @@ export const userSchema = new Schema<IUser>(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true , versionKey: false}
 );
 
 userSchema.pre('save', async function () {

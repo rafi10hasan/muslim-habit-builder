@@ -3,14 +3,14 @@ import { StatusCodes } from 'http-status-codes';
 import sendResponse from '../../../shared/sendResponse';
 
 import asyncHandler from '../../../shared/asynchandler';
-import { TProfileImage } from './user.interface';
 import { userService } from './user.service';
 
 
 // register user
 const createAccountIntoDb = asyncHandler(async (req: Request, res: Response) => {
-  const userPayload = req.body;
+  const userPayload = req.body
   const result = await userService.createAccount(userPayload);
+
   // console.log(result);
   const isVerificationRequired = result.status === 'UNVERIFIED';
   sendResponse(res, {
@@ -22,6 +22,19 @@ const createAccountIntoDb = asyncHandler(async (req: Request, res: Response) => 
 });
 
 
+const createGuestAccountIntoDb = asyncHandler(async (req: Request, res: Response) => {
+  const result = await userService.createGuestAccount();
+  // console.log(result);
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: 'Guest account created successfully',
+    data: result,
+  });
+});
+
 export const userController = {
   createAccountIntoDb,
+  createGuestAccountIntoDb
+
 };

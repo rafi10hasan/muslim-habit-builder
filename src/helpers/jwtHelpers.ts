@@ -18,7 +18,7 @@ const generateTokens = async (payload: JwtPayload) => {
   const refreshTokenExpiresIn = config.jwt_refresh_token_expiresin as SignOptions['expiresIn'];
 
   const isRemembered = payload.isRemembered || false;
-  const adjustedRefreshTokenExpiresIn = isRemembered ? '20d' : refreshTokenExpiresIn;
+  const adjustedRefreshTokenExpiresIn = isRemembered ? '30d' : refreshTokenExpiresIn;
   const adjustedAccessTokenExpiresIn = isRemembered ? '10d' : accessTokenExpiresIn;
   const accessToken = jwt.sign(payload, config.jwt_access_token_secret!, {
     expiresIn: adjustedAccessTokenExpiresIn,
@@ -36,7 +36,7 @@ const generateTokens = async (payload: JwtPayload) => {
 
   await SessionModel.findOneAndUpdate(
     { user: payload.id },
-    { refreshToken: refreshToken, expiresAt: decoded.exp * 1000, sessionId: payload.sessionId, lastLoginAt: new Date() },
+    { refreshToken: refreshToken, expiresAt: decoded.exp * 1000, lastLoginAt: new Date() },
     { upsert: true, new: true },
   );
 

@@ -1,0 +1,110 @@
+import { Request, Response } from "express";
+import asyncHandler from "../../../shared/asynchandler";
+import { habitTemplateService } from "./system.habit.service";
+import sendResponse from "../../../shared/sendResponse";
+import { StatusCodes } from "http-status-codes";
+
+
+
+
+const createHabitTemplate = asyncHandler(async (req: Request, res: Response) => {
+  const result = await habitTemplateService.createHabitTemplateIntoDB(req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: 'Habit template created successfully',
+    data: result,
+  });
+});
+
+const getSystemHabits = asyncHandler(async (req: Request, res: Response) => {
+  const result = await habitTemplateService.GetAllHabitsWithStatus(req.user, req.query.category as string);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Habit templates fetched successfully',
+    data: result,
+  });
+});
+
+
+export const habitTemplateController = {
+  createHabitTemplate,
+  getSystemHabits
+};
+
+/*
+const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
+    const userId = user._id as Types.ObjectId;
+
+    const templateFilter: any = { isActive: true };
+    if (category) templateFilter.category = category;
+
+    // শুধু top-level templates আনো (group child না)
+    const topLevelTemplates = await HabitTemplate.find({
+        ...templateFilter,
+        group: null,
+    }).lean();
+
+    // User এর সব UserHabit আনো
+    const userHabits = await UserHabit.find({ user: userId })
+        .select('template isActive _id')
+        .lean();
+
+    const userHabitMap = new Map(
+        userHabits.map(h => [h.template?.toString(), h]),
+    );
+
+    const buckets: Record<string, any[]> = {
+        beginner: [],
+        intermediate: [],
+        advanced: [],
+        custom: [],
+    };
+
+    let activeCount = 0;
+    let totalCount = 0;
+
+    for (const t of topLevelTemplates) {
+        const templateId = t._id.toString();
+
+        // Group হলে children এর isActive check করো
+        let isUserActive = false;
+
+        if (t.isGroup) {
+            const childUserHabits = await UserHabit.exists({
+                user: userId,
+                group: t._id,
+                isActive: true,
+            });
+            isUserActive = !!childUserHabits;
+        } else {
+            const userHabit = userHabitMap.get(templateId);
+            isUserActive = userHabit?.isActive ?? false;
+        }
+
+        if (isUserActive) activeCount++;
+        totalCount++;
+
+        const habitEntry = {
+            _id: t._id,
+            name: t.name,
+            isUserActive,
+        };
+
+        const level = (t.level ?? 'beginner').toLowerCase();
+        buckets[level in buckets ? level : 'custom'].push(habitEntry);
+    }
+
+    return {
+        activeCount,
+        totalCount,
+        beginner: buckets.beginner,
+        intermediate: buckets.intermediate,
+        advanced: buckets.advanced,
+        custom: buckets.custom,
+    };
+};
+
+
+*/

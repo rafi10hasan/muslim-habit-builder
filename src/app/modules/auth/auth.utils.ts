@@ -4,7 +4,7 @@ import otpMailTemplate from '../../../mailTemplate/otpMailTemplate';
 import { generateOTP } from '../../../utilities/generateOtp';
 import sendMail from '../../../utilities/sendEmail';
 import { BadRequestError, InternalServerError } from '../../errors/request/apiError';
-import OtpToken from '../otpToken/otp.token.model';
+import OtpToken from '../otp-token/otp.token.model';
 import { SessionModel } from '../session/session.model';
 
 export const sendVerificationOtp = async (userId: Types.ObjectId, email: string) => {
@@ -45,11 +45,4 @@ export const sendVerificationOtp = async (userId: Types.ObjectId, email: string)
     await OtpToken.deleteOne({ userId, type: 'email_verification' });
     throw new BadRequestError('Failed to send verification email. Try again.');
   }
-};
-
-export const invalidateUserOldSession = async (userId: string) => {
-  await SessionModel.updateOne(
-    { user: userId },
-    { refreshToken: null, tokenExpiresAt: null }
-  );
 };

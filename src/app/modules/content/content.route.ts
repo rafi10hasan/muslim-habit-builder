@@ -10,7 +10,7 @@ const router = Router();
 
 router.post(
   '/create-or-update',
-  authMiddleware(ADMIN_ROLE.ADMIN, ADMIN_ROLE.SUPER_ADMIN),
+  // authMiddleware(ADMIN_ROLE.ADMIN, ADMIN_ROLE.SUPER_ADMIN),
   validateRequest({
     body: contentZodValidation.createOrUpdatePageSchema,
   }),
