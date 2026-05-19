@@ -1,5 +1,5 @@
 export const USER_HABIT_MESSAGES = {
-  CREATED: 'User habit created successfully',
+  CREATED: 'Custom habit created successfully',
   ACTIVATED: 'User habit activated successfully',
   DEACTIVATED: 'User habit deactivated successfully',
   UPDATED: 'User habit updated successfully',

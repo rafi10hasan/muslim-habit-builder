@@ -52,7 +52,8 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
     defaultFrequency: {
       type: String,
       enum: Object.values(FREQUENCIES),
-      required: true
+      required: true,
+      default: FREQUENCIES.DAILY
     },
 
     allowedFrequencies: {
@@ -79,7 +80,7 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
       }],
       default: [],
     },
-    
+
     adhkarSet: {
       type: Schema.Types.ObjectId,
       ref: 'AdhkarSet',

@@ -13,14 +13,14 @@ export const HABIT_LEVEL = {
 
 
 export const WEEK_DAYS = {
-    MON: 'Mon',
-    TUE: 'Tue',
-    WED: 'Wed',
-    THU: 'Thu',
-    FRI: 'Fri',
-    SAT: 'Sat',
-    SUN: 'Sun',
-} as const
+    MON: "mon",
+    TUE: "tue",
+    WED: "wed",
+    THU: "thu",
+    FRI: "fri",
+    SAT: "sat",
+    SUN: "sun",
+} as const;
 
 export const FREQUENCY_TYPE = {
     DAILY: 'daily',
@@ -51,5 +51,5 @@ export type TFrequency =
 
 export type TDetailItem =
     | { type: 'text'; content: string }
-    | { type: 'image'; url: [string] , default: null}
+    | { type: 'image'; url: [string], default: null }
     | { type: 'pdf'; url: string; fileName: string, default: null }

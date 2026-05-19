@@ -6,7 +6,6 @@ import { SYSTEM_HABIT_MESSAGES } from './system.habit.constant';
 import { HabitTemplate } from './system.habit.model';
 import { TCreateHabitTemplate } from './system.habit.zod';
 
-
 const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
     const userId = user._id as Types.ObjectId;
 
@@ -15,16 +14,29 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         templateFilter.category = { $regex: new RegExp(`^${category}$`, 'i') };
     }
 
-    // শুধু top-level templates আনো (group child না)
+    // ── Template based habits ──
     const topLevelTemplates = await HabitTemplate.find({
         ...templateFilter,
-        group: null,
+        $or: [{ group: null }, { group: { $exists: false } }],
     }).lean();
 
-    // User এর সব UserHabit আনো
-    const userHabits = await UserHabit.find({ user: userId })
-        .select('template isActive _id')
-        .lean();
+    const topLevelIds = topLevelTemplates.map(t => t._id);
+
+    const allChildren = await HabitTemplate.find({
+        group: { $in: topLevelIds },
+        isActive: true,
+    }).select('_id group').lean();
+
+    const groupChildrenMap = new Map<string, Types.ObjectId[]>();
+    for (const child of allChildren) {
+        const groupId = child.group!.toString();
+        if (!groupChildrenMap.has(groupId)) groupChildrenMap.set(groupId, []);
+        groupChildrenMap.get(groupId)!.push(child._id);
+    }
+
+    const userHabits = await UserHabit.find({
+        user: userId,
+    }).select('template isActive _id name category habitType').lean();
 
     const userHabitMap = new Map(
         userHabits.map(h => [h.template?.toString(), h]),
@@ -42,19 +54,16 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
 
     for (const t of topLevelTemplates) {
         const templateId = t._id.toString();
+        const children = groupChildrenMap.get(templateId) ?? [];
+        const isGroup = children.length > 0;
 
-        // console.log({t})
-        // Group হলে children এর isActive check করো
         let isUserActive = false;
 
-        if (templateId) {
-            const childUserHabits = await UserHabit.exists({
-                user: userId,
-                group: templateId,
-                isActive: true,
+        if (isGroup) {
+            isUserActive = children.some(childId => {
+                const userHabit = userHabitMap.get(childId.toString());
+                return userHabit?.isActive ?? false;
             });
-            console.log({ childUserHabits })
-            isUserActive = !!childUserHabits;
         } else {
             const userHabit = userHabitMap.get(templateId);
             isUserActive = userHabit?.isActive ?? false;
@@ -63,14 +72,41 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         if (isUserActive) activeCount++;
         totalCount++;
 
-        const habitEntry = {
+        const level = (t.level ?? 'beginner').toLowerCase();
+        buckets[level in buckets ? level : 'custom'].push({
             _id: t._id,
             name: t.name,
             isUserActive,
-        };
+            category: t.category,
+            infoContent: t.infoContent,
+        });
+    }
 
-        const level = (t.level ?? 'beginner').toLowerCase();
-        buckets[level in buckets ? level : 'custom'].push(habitEntry);
+    // ── Custom habits — template: null ──
+    const customHabitFilter: any = {
+        user: userId,
+        template: null,
+    };
+
+    if (category && category.toLowerCase() !== 'all') {
+        customHabitFilter.category = { $regex: new RegExp(`^${category}$`, 'i') };
+    }
+
+    const customHabits = await UserHabit.find(customHabitFilter)
+        .select('_id name category isActive infoContent')
+        .lean();
+
+    for (const h of customHabits) {
+        activeCount++;
+        totalCount++;
+
+        buckets.custom.push({
+            _id: h._id,
+            name: h.name,
+            isUserActive: h.isActive,  
+            category: h.category,
+            infoContent: h.infoContent ?? null,
+        });
     }
 
     return {

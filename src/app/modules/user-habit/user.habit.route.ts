@@ -19,12 +19,41 @@ userHabitRouter.post(
     userHabitController.addHabitInYourHabitListIntoDb,
 );
 
-
-
 userHabitRouter.get(
     '/today',
     authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
     userHabitController.getTodayHabits,
+);
+
+userHabitRouter.post(
+    '/custom/add',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    validateRequest({
+        body: userHabitValidationZodSchema.addCustomHabitSchema,
+    }),
+    userHabitController.addCustomHabitIntoDb,
+);
+
+userHabitRouter.post(
+    '/update/:habitId',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    validateRequest({
+        body: userHabitValidationZodSchema.editHabitSchema,
+    }),
+    userHabitController.updateHabitIntodb,
+);
+
+userHabitRouter.post(
+    '/search',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    userHabitController.searchHabitsToConnect,
+);
+
+
+userHabitRouter.get(
+    '/details/:habitId',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    userHabitController.getHabitDetail,
 );
 
 

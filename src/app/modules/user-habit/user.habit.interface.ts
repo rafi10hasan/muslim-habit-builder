@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { ConnectedPrayer, HabitCategory } from '../../../interfaces';
+import { ConnectedPrayer, HabitCategory, HabitLevel } from '../../../interfaces';
 import { FrequencyType, HabitLocation, TargetType, WeekDay } from './user.habit.constant';
 import { Frequency, HabitType } from '../habit-template/system.habit.constant';
 
@@ -21,9 +21,8 @@ export interface IConnectedHabit {
 }
 
 export interface IUserHabit {
-  _id: Types.ObjectId;
   user: Types.ObjectId;
-  template?: Types.ObjectId;
+  template?: Types.ObjectId | null;
   name: string;
   category: HabitCategory;
   connectedPrayer?: ConnectedPrayer;
@@ -31,7 +30,8 @@ export interface IUserHabit {
   frequency: IFrequency;
   allowedFrequencies: Frequency[];
   parent: Types.ObjectId | null;
-  habitType: HabitType;
+  habitType?: HabitType | null;
+  level: HabitLevel;   
   group: Types.ObjectId | null;
   reminder: IReminder;
   startDate: Date;
@@ -43,7 +43,7 @@ export interface IUserHabit {
   isLocked: boolean;
   targetDescription?: string;
   connectedHabits?: IConnectedHabit[];
-  customDetails?: string;
+  customDetails?: string | null;
   isActive: boolean;
   progressRestartedAt?: Date;
   createdAt: Date;
