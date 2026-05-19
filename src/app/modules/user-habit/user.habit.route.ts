@@ -34,7 +34,7 @@ userHabitRouter.post(
     userHabitController.addCustomHabitIntoDb,
 );
 
-userHabitRouter.post(
+userHabitRouter.patch(
     '/update/:habitId',
     authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
     validateRequest({
@@ -43,7 +43,7 @@ userHabitRouter.post(
     userHabitController.updateHabitIntodb,
 );
 
-userHabitRouter.post(
+userHabitRouter.get(
     '/search',
     authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
     userHabitController.searchHabitsToConnect,

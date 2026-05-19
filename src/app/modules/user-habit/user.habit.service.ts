@@ -173,29 +173,96 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
             user: userId,
             isActive: true,
         });
-        if (!userHabit) throw new BadRequestError('Habit not found or already deactivated');
 
-        userHabit.isActive = false;
-        userHabit.parent = null;
-        await userHabit.save();
+        if (!userHabit) {
+            const customHabit = await UserHabit.findOne({
+                _id: habitId,
+                user: userId,
+                template: null,
+            });
 
-        await HabitLog.findOneAndUpdate(
-            { userHabit: userHabit._id, date, status: 'Pending' },
-            { $set: { status: 'Skipped', skippedAt: new Date() } },
-        );
+            console.log({ customHabit });
 
-        // Parent এর connectedHabits থেকে disconnect করো
-        await disconnectFromParents(userHabit._id);
+            if (!customHabit) {
+                throw new BadRequestError('custom habit not found');
+            }
+            if (!customHabit.isActive) {
+                throw new BadRequestError('Habit is already deactivated');
+            }
+            await HabitLog.findOneAndUpdate(
+                { userHabit: customHabit._id, date, status: 'Pending' },
+                { $set: { status: 'Skipped', skippedAt: new Date() } },
+            );
+            customHabit.isActive = false;
+            await customHabit.save()
+            // Parent এর connectedHabits থেকে disconnect করো
+            await disconnectFromParents(customHabit._id);
 
-        return null;
+            return null;
+        }
+
+        if (userHabit) {
+            userHabit.isActive = false;
+            userHabit.parent = null;
+            await userHabit?.save();
+
+            await HabitLog.findOneAndUpdate(
+                { userHabit: userHabit._id, date, status: 'Pending' },
+                { $set: { status: 'Skipped', skippedAt: new Date() } },
+            );
+
+            // Parent এর connectedHabits থেকে disconnect করো
+            await disconnectFromParents(userHabit._id);
+
+            return null;
+        }
+
     }
 
     // ─────────────────────────────────────────────────────────
     //  ACTIVATE PATH
     // ─────────────────────────────────────────────────────────
     const template = await HabitTemplate.findById(habitId).lean();
-    if (!template) throw new NotFoundError('Habit template not found');
-    if (!template.isActive) throw new BadRequestError('This habit is no longer available');
+
+    if (!template) {
+        // check it is custom habit activation with template null
+        const userCustomHabit = await UserHabit.findOne({ user: userId, _id: habitId, template: null }).lean();
+        if (!userCustomHabit) {
+            throw new NotFoundError('Habit template not found');
+        }
+
+        if (userCustomHabit.isActive) {
+            throw new BadRequestError('Habit is already active');
+        }
+        const existingLog = await HabitLog.findOne({
+            userHabit: userCustomHabit._id,
+            date,
+        });
+
+        if (existingLog) {
+            if (existingLog.status === 'Skipped') {
+                existingLog.status = 'Pending';
+                existingLog.skippedAt = null;
+                await existingLog.save();
+            }
+        } else {
+            await HabitLog.create({
+                user: userId,
+                userHabit: userCustomHabit._id,
+                date,
+                status: 'Pending',
+            });
+        }
+        await UserHabit.updateOne(
+            { _id: userCustomHabit._id },
+            { $set: { isActive: true, startDate: new Date() } }
+        );
+
+        return { added: [{ _id: userCustomHabit._id, name: userCustomHabit.name }], skipped: null };
+    }
+
+    // non custom habit activation with template found but inactive
+    if (!template?.isActive) throw new BadRequestError('This habit is no longer available');
 
     const childTemplates = await HabitTemplate.find({
         group: habitId,
@@ -362,7 +429,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
 
     if (existingHabit) {
         if (existingHabit.isActive) {
-            throw new BadRequestError('You have already added this habit.');
+            throw new BadRequestError('habit is already activated.');
         }
 
         // Parent active কিনা check
@@ -776,56 +843,109 @@ const updateUserHabit = async (user: IUser, userHabitId: string, payload: EditHa
     }
 
     // Connected habits — only for obligatory_prayer
+    // if (payload.connectedHabits !== undefined) {
+    //     if (habit.habitType !== 'obligatory_prayer') {
+    //         throw new BadRequestError('Only obligatory prayers can have connected habits');
+    //     }
+
+    //     if (payload.connectedHabits.length) {
+    //         // Validate সব ids এই user এর active habits
+    //         const validHabits = await UserHabit.find({
+    //             _id: { $in: payload.connectedHabits },
+    //             user: userId,
+    //             isActive: true,
+    //         }).select('_id').lean();
+
+    //         if (validHabits.length !== payload.connectedHabits.length) {
+    //             throw new BadRequestError(
+    //                 'One or more connected habits are invalid or inactive',
+    //             );
+    //         }
+    //     }
+
+    //     // Remove হওয়া habits এর parent null করো
+    //     const oldIds = (habit.connectedHabits ?? []).map(c => c.userHabit.toString());
+    //     const newIds = payload.connectedHabits.map(c => c.userHabit.toString());
+    //     const removedIds = oldIds.filter(id => !newIds.includes(id));
+
+    //     if (removedIds.length) {
+    //         await UserHabit.updateMany(
+    //             { _id: { $in: removedIds }, user: userId },
+    //             { $set: { parent: null } },
+    //         );
+    //         // Parent এর connectedHabits থেকেও disconnect
+    //         await Promise.all(removedIds.map(id =>
+    //             disconnectFromParents(new Types.ObjectId(id))
+    //         ));
+    //     }
+
+    //     // নতুন ids এর parent set করো
+    //     const addedIds = newIds.filter(id => !oldIds.includes(id));
+    //     if (addedIds.length) {
+    //         await UserHabit.updateMany(
+    //             { _id: { $in: addedIds }, user: userId },
+    //             { $set: { parent: habit.template } },
+    //         );
+    //     }
+
+    //     // Array index থেকে order set করো
+    //     habit.connectedHabits = payload.connectedHabits.map((item, index) => ({
+    //         userHabit: new Types.ObjectId(item.userHabit),
+    //         order: item.order ?? index + 1,
+    //     }));
+    // }
+
     if (payload.connectedHabits !== undefined) {
         if (habit.habitType !== 'obligatory_prayer') {
             throw new BadRequestError('Only obligatory prayers can have connected habits');
         }
 
-        if (payload.connectedHabits.length) {
-            // Validate সব ids এই user এর active habits
-            const validHabits = await UserHabit.find({
-                _id: { $in: payload.connectedHabits },
-                user: userId,
-                isActive: true,
-            }).select('_id').lean();
+        const inputIds = payload.connectedHabits; // পোস্টম্যান থেকে আসা নতুন আইডিগুলো
 
-            if (validHabits.length !== payload.connectedHabits.length) {
-                throw new BadRequestError(
-                    'One or more connected habits are invalid or inactive',
+        if (inputIds.length) {
+            // ১. বর্তমানের অলরেডি কানেক্টেড আইডিগুলোর লিস্ট এবং ম্যাক্সিমাম অর্ডার বের করুন
+            const existingConnectedHabits = habit.connectedHabits ?? [];
+            const existingIds = existingConnectedHabits.map(c => c.userHabit.toString());
+
+            // ২. ইনপুট আইডিগুলোর মধ্যে যেগুলো অলরেডি কানেক্টেড আছে, সেগুলোকে ফিল্টার করে বাদ দিন (যাতে ডুপ্লিকেট না হয়)
+            const uniqueNewIds = inputIds.filter(id => !existingIds.includes(id));
+
+            if (uniqueNewIds.length) {
+                // ৩. ভ্যালিডেশন: নতুন আইডিগুলো এই ইউজারের অ্যাক্টিভ হ্যাবিট কিনা চেক করুন
+                const validHabits = await UserHabit.find({
+                    _id: { $in: uniqueNewIds },
+                    user: userId,
+                    isActive: true,
+                }).select('_id').lean();
+
+                if (validHabits.length !== uniqueNewIds.length) {
+                    throw new BadRequestError(
+                        'One or more connected habits are invalid or inactive',
+                    );
+                }
+
+                // ৪. নতুন আইডিগুলোর জন্য parent সেট করুন
+                await UserHabit.updateMany(
+                    { _id: { $in: uniqueNewIds }, user: userId },
+                    { $set: { parent: habit.template } },
                 );
+
+                // ৫. বর্তমানের সর্বোচ্চ অর্ডার (maxOrder) খুঁজে বের করুন
+                const maxOrder = existingConnectedHabits.reduce(
+                    (max, item) => (item.order > max ? item.order : max),
+                    0
+                );
+
+                // ৬. নতুন আইডিগুলোকে অর্ডারের ক্রমানুসারে অবজেক্ট আকারে ম্যাপ করুন
+                const formattedNewHabits = uniqueNewIds.map((id, index) => ({
+                    userHabit: new Types.ObjectId(id),
+                    order: maxOrder + index + 1, // আগের সর্বোচ্চ অর্ডারের পর থেকে শুরু হবে
+                }));
+
+                // ৭. আগের অ্যারের সাথে নতুন অ্যারেটি যুক্ত (Append) করে দিন
+                habit.connectedHabits = [...existingConnectedHabits, ...formattedNewHabits];
             }
         }
-
-        // Remove হওয়া habits এর parent null করো
-        const oldIds = (habit.connectedHabits ?? []).map(c => c.userHabit.toString());
-        const newIds = payload.connectedHabits.map(c => c.userHabit.toString());
-        const removedIds = oldIds.filter(id => !newIds.includes(id));
-
-        if (removedIds.length) {
-            await UserHabit.updateMany(
-                { _id: { $in: removedIds }, user: userId },
-                { $set: { parent: null } },
-            );
-            // Parent এর connectedHabits থেকেও disconnect
-            await Promise.all(removedIds.map(id =>
-                disconnectFromParents(new Types.ObjectId(id))
-            ));
-        }
-
-        // নতুন ids এর parent set করো
-        const addedIds = newIds.filter(id => !oldIds.includes(id));
-        if (addedIds.length) {
-            await UserHabit.updateMany(
-                { _id: { $in: addedIds }, user: userId },
-                { $set: { parent: habit.template } },
-            );
-        }
-
-        // Array index থেকে order set করো
-        habit.connectedHabits = payload.connectedHabits.map((item, index) => ({
-            userHabit: new Types.ObjectId(item.userHabit),
-            order: item.order ?? index + 1,
-        }));
     }
 
     await habit.save();
@@ -891,22 +1011,6 @@ const addCustomHabit = async (user: IUser, payload: AddCustomHabitPayload) => {
     const userId = user._id as Types.ObjectId;
     const date = buildDateBasedOnTimeZone(new Date(), user.timezone as string);
 
-    // Name required
-    if (!payload.name?.trim()) throw new BadRequestError('Habit name is required');
-
-    // Category required
-    if (!payload.category) throw new BadRequestError('Category is required');
-
-    // Frequency required
-    if (!payload.frequency?.type) throw new BadRequestError('Frequency is required');
-
-    if (payload.frequency.type === 'weekly' && !payload.frequency.selectedDays?.length) {
-        throw new BadRequestError('Please select at least one day for weekly frequency');
-    }
-
-    if (payload.frequency.type === 'every_n_days' && !payload.frequency.everyNDays) {
-        throw new BadRequestError('Please provide everyNDays value');
-    }
 
     // Duplicate name check for this user
     const duplicate = await UserHabit.exists({
@@ -926,6 +1030,7 @@ const addCustomHabit = async (user: IUser, payload: AddCustomHabitPayload) => {
         connectedPrayer: payload.connectedPrayer ?? null,
         location: payload.location ?? 'Home',
         frequency: payload.frequency,
+        allowedFrequencies: [payload.frequency.type],
         reminder: payload.reminder ?? { enabled: false, time: '12:00 AM' },
         startDate: payload.startDate ? new Date(payload.startDate) : new Date(),
         showOnTodayScreen: payload.customDetails ? true : false,

@@ -297,28 +297,18 @@ export const editHabitSchema = z
 
 
     connectedHabits: z
-      .array(connectedHabitSchema, {
-        error: () => 'connectedHabits must be an array',
+      .array(z.string(), {
+        error: () => 'connectedHabits must be an array of string IDs',
       })
       .optional()
       .superRefine((val, ctx) => {
         if (!val?.length) return;
 
-        // Duplicate order check
-        const orders = val.map(c => c.order);
-        if (new Set(orders).size !== orders.length) {
+        // ইনপুটের ভেতর যেন ডুপ্লিকেট আইডি না থাকে
+        if (new Set(val).size !== val.length) {
           ctx.addIssue({
             code: 'custom',
-            message: 'Connected habits must have unique order values',
-          });
-        }
-
-        // Duplicate userHabit check
-        const ids = val.map(c => c.userHabit);
-        if (new Set(ids).size !== ids.length) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Connected habits must not have duplicate habits',
+            message: 'Input habits must not have duplicate IDs',
           });
         }
       }),
