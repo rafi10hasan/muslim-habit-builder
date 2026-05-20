@@ -61,7 +61,7 @@ const buildHabitPayload = (userId: Types.ObjectId, template: any) => ({
     showOnTodayScreen: true,
     displayOrder: 0,
     isActive: true,
-    connectedHabits: [],
+    connectedHabits: template.connectedHabits ?? [],
     customDetails: null,
 });
 
@@ -134,7 +134,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
             group: habitId,
             isActive: true,
         }).lean();
-
+        console.log({ childTemplates })
         const isGroup = childTemplates.length > 0;
 
         // ── Group deactivate ──
@@ -144,7 +144,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
                 template: { $in: childTemplates.map(c => c._id) },
                 isActive: true,
             }).select('_id').lean();
-
+            console.log({ activeHabits })
             if (!activeHabits.length) {
                 throw new BadRequestError('No active habits found in this group.');
             }
@@ -163,6 +163,22 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
 
             // সব child habit কে তাদের parent এর connectedHabits থেকে disconnect করো
             await Promise.all(habitIds.map(id => disconnectFromParents(id)));
+
+            console.log({ habitIds })
+
+            // ami boltesi ekhane fazr deactivate thakle fazr sunnah jeno today habit na theke 
+            const activeChildHabits = await UserHabit.find({
+                user: userId,
+                parent: { $in: childTemplates.map(c => c._id) },
+                isActive: true,
+            }).select('_id').lean();
+
+            if (activeChildHabits.length) {
+                await UserHabit.updateMany(
+                    { _id: { $in: activeChildHabits.map(h => h._id) } },
+                    { $set: { isActive: false } }
+                );
+            }
 
             return null;
         }
@@ -362,6 +378,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
                 }
             }
         }
+
 
         // Brand new habits create (with parent check)
         const skippedNames: string[] = [];

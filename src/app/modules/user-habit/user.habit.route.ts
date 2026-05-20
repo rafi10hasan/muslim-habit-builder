@@ -44,7 +44,7 @@ userHabitRouter.patch(
 );
 
 userHabitRouter.get(
-    '/search',
+    '/search/:habitId',
     authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
     userHabitController.searchHabitsToConnect,
 );

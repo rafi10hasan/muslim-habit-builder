@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { JsonWebTokenError, JwtPayload, TokenExpiredError } from 'jsonwebtoken';
 import config from '../../config';
 import jwtHelpers from '../../helpers/jwtHelpers';
-import { ForbiddenError, UnauthorizedError } from '../errors/request/apiError';
+import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from '../errors/request/apiError';
 
 import User from '../modules/user/user.model';
 
@@ -26,25 +26,21 @@ const authMiddleware = (...requiredRoles: string[]) => {
       const user = await User.findById(id).select('-password');
 
       if (!user) {
-        throw new UnauthorizedError('User not exists!');
+        throw new NotFoundError('User not exists!');
       }
 
-     
 
       if (user.deletedAt) {
-        throw new UnauthorizedError('Unauthorized Access');
+        throw new NotFoundError('User not exists!');
       }
 
-      if (!user.verification) {
-        throw new UnauthorizedError('This email is not verified. Please verify your email to access this resource.');
-      }
 
       if (user.passwordChangedAt && user.isJWTIssuedBeforePasswordChanged(iat)) {
         throw new UnauthorizedError('Password changed, please login again');
       }
 
       if (user.status === 'BLOCKED') {
-        throw new UnauthorizedError('This account is blocked. Contact support.');
+        throw new BadRequestError('This account is blocked. Contact support.');
       }
       
 

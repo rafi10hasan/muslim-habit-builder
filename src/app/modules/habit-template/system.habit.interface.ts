@@ -4,7 +4,7 @@ import { ConnectedPrayer, HabitCategory, HabitLevel } from '../../../interfaces'
 
 
 export interface IConnectedHabit {
-  userHabit: Types.ObjectId;
+  templateHabit: Types.ObjectId;
   order: number;
 }
 
@@ -36,6 +36,8 @@ export interface IHabitTemplate {
   level: HabitLevel;       
   
   connectedHabits?: IConnectedHabit[];
+  
+  isConnectedObligatoryPrayer: boolean;
 
   isLocked: boolean;
   // Book icon habits (img 16: "book sign will appear next to specific habits")

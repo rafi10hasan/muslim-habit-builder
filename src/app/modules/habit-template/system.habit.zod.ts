@@ -75,7 +75,7 @@ const createHabitTemplateZod = z.object({
       return `Invalid category. Must be one of: ${Object.values(HABIT_CATEGORIES).join(', ')}`
     },
   }),
-  
+
   connectedPrayer: z.enum(Object.values(CONNECTED_PRAYERS) as [string, ...string[]], {
     error: (issue) => {
       if (issue.input === undefined) return 'Connected prayer is required'
@@ -135,7 +135,7 @@ const createHabitTemplateZod = z.object({
 
   infoContent: z.string().min(0, "Info content must be at least 20 characters long").optional(),
 
-  adhakarSet: z.string({
+  adhkarSet: z.string({
     error: 'Adhkar Set ID must be a string',
   }).regex(/^[0-9a-fA-F]{24}$/, {
     message: 'Invalid Id format',
@@ -150,7 +150,23 @@ const createHabitTemplateZod = z.object({
     message: 'Invalid Id format',
   })
     .nullable()
+    .optional(),
+
+  connectedHabits: z
+    .array(z.string(), {
+      error: () => 'connectedHabits must be an array of string IDs',
+    })
     .optional()
+    .superRefine((val, ctx) => {
+      if (!val?.length) return;
+
+      if (new Set(val).size !== val.length) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Input habits must not have duplicate IDs',
+        });
+      }
+    }),
 
 })
 

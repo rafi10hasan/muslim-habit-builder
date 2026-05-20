@@ -5,6 +5,7 @@ export const CONNECTED_PRAYERS = {
     ASR: "Asr",
     MAGHRIB: "Maghrib",
     ISHA: "Isha And Witr",
+    FIVE_PRAYERS: "Five Prayers",
     NAFL: "Nafl",
     DUHA: "Duha",
     NIGHT_PRAYER: "Night Prayer",

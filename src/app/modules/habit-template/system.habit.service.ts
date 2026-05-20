@@ -5,6 +5,7 @@ import { IUser } from '../user/user.interface';
 import { SYSTEM_HABIT_MESSAGES } from './system.habit.constant';
 import { HabitTemplate } from './system.habit.model';
 import { TCreateHabitTemplate } from './system.habit.zod';
+import { IHabitTemplate } from './system.habit.interface';
 
 const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
     const userId = user._id as Types.ObjectId;
@@ -103,7 +104,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         buckets.custom.push({
             _id: h._id,
             name: h.name,
-            isUserActive: h.isActive,  
+            isUserActive: h.isActive,
             category: h.category,
             infoContent: h.infoContent ?? null,
         });
@@ -130,7 +131,7 @@ const createHabitTemplateIntoDB = async (payload: TCreateHabitTemplate) => {
         groupId = groupExists?._id || null;
     }
 
-    const newPayload = {
+    const newPayload: any = {
         ...payload,
         group: groupId,
     }

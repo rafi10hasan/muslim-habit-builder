@@ -75,7 +75,7 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
 
     connectedHabits: {
       type: [{
-        userHabit: { type: Schema.Types.ObjectId, ref: 'UserHabit', required: false },
+        templateHabit: { type: Schema.Types.ObjectId, ref: 'HabitTemplate', required: false },
         order: { type: Number, required: true },
       }],
       default: [],
