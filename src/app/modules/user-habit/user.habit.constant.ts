@@ -1,6 +1,9 @@
 export const USER_HABIT_MESSAGES = {
+
   CREATED: 'Custom habit created successfully',
   ACTIVATED: 'User habit activated successfully',
+  COMPLETED: 'User habit completed successfully',
+  SKIPPED: 'User habit skipped successfully',
   DEACTIVATED: 'User habit deactivated successfully',
   UPDATED: 'User habit updated successfully',
   DELETED: 'User habit deleted successfully',
@@ -9,6 +12,7 @@ export const USER_HABIT_MESSAGES = {
   PARENT_NOT_FOUND: 'Parent habit not found',
   HABIT_NOT_FOUND: 'Habit template not found',
   PARENT_CATEGORY_MISMATCH: 'Parent habit category does not match the new habit category',
+
 }
 
 

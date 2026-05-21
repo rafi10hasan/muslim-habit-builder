@@ -238,6 +238,18 @@ export const addCustomHabitSchema = z.object({
     .optional()
     .transform(val => (val ? new Date(val) : new Date())),
 
+  showOnTodayScreen: z
+    .preprocess(
+      (val) => {
+        if (val === 'true') return true;
+        if (val === 'false') return false;
+        return val;
+      },
+      z.boolean({
+        error: () => 'showOnTodayScreen must be a boolean',
+      }).optional()
+        .default(false),
+    ),
   customDetails: z
     .string({
       error: () => 'Custom details must be a string',
@@ -253,6 +265,31 @@ export const addCustomHabitSchema = z.object({
 // ─────────────────────────────────────────────────────────────
 export const editHabitSchema = z
   .object({
+    name: z.string({
+      error: (issue) => {
+        if (issue.input === undefined) return 'Name is required';
+        if (typeof issue.input !== 'string') return 'Name must be a string';
+        return 'Invalid name';
+      },
+    }).min(1, 'Name cannot be empty').max(50, 'Name cannot exceed 50 characters').optional(),
+
+    category: z.enum(Object.values(HABIT_CATEGORIES) as [string, ...string[]], {
+      error: (issue) => {
+        if (issue.input === undefined) return 'Category is required';
+        return `Invalid category. Must be one of: ${Object.values(HABIT_CATEGORIES).join(', ')}`;
+      },
+    }).optional(),
+
+    connectedPrayer: z
+      .enum(
+        Object.values(CONNECTED_PRAYERS).filter(Boolean) as [string, ...string[]],
+        {
+          error: () =>
+            `Invalid connected prayer. Must be one of: ${Object.values(CONNECTED_PRAYERS).filter(Boolean).join(', ')}`,
+        },
+      )
+      .optional(),
+
     frequency: frequencySchema.optional(),
 
     reminder: reminderSchema.optional(),

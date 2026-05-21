@@ -11,6 +11,11 @@ export const PROVIDER = {
   APPLE: 'apple',
 } as const;
 
+export const NOTIFICATION_TYPE = {
+  VIBRATE: 'vibrate',
+  SOUND: 'sound',
+} as const;
+
 export const SUBSCRIPTION_PLAN = {
   FREE: 'free',
   PREMIUM: 'premium',
@@ -36,6 +41,8 @@ export const USER_STATUS = {
   BLOCKED: 'blocked',
   DISABLED: 'disabled'
 }
+
+export type TNotificationType = (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE];
 export type TSubscriptionPlan = (typeof SUBSCRIPTION_PLAN)[keyof typeof SUBSCRIPTION_PLAN];
 export type TSubscriptionMode = (typeof SUBSCRIPTION_MODE)[keyof typeof SUBSCRIPTION_MODE];
 export type TSubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[keyof typeof SUBSCRIPTION_STATUS];

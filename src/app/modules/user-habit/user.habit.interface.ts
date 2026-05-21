@@ -26,6 +26,7 @@ export interface IUserHabit {
   name: string;
   category: HabitCategory;
   connectedPrayer?: ConnectedPrayer;
+  isPrayerLocked: boolean;
   location?: HabitLocation;
   frequency: IFrequency;
   allowedFrequencies: Frequency[];
@@ -34,6 +35,7 @@ export interface IUserHabit {
   level: HabitLevel;   
   group: Types.ObjectId | null;
   reminder: IReminder;
+  isPreBuilt: boolean;
   startDate: Date;
   showOnTodayScreen: boolean;
   targetType?: TargetType;

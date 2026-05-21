@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import mongoose, { Schema } from 'mongoose';
 import config from '../../../config';
-import { PROVIDER, USER_ROLE, USER_STATUS } from './user.constant';
+import { NOTIFICATION_TYPE, PROVIDER, SUBSCRIPTION_PLAN, USER_ROLE, USER_STATUS } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
 
 
@@ -20,7 +20,7 @@ export const userSchema = new Schema<IUser>(
     },
     avatar: {
       type: String,
-      default: null
+      default: null 
     },
     password: {
       type: String,
@@ -52,6 +52,21 @@ export const userSchema = new Schema<IUser>(
       type: String,
       default: null
     },
+    hasNotification: {
+      type: Boolean,
+      default: false
+    },
+    subscriptionPlan: {
+      type: String,
+      enum: Object.values(SUBSCRIPTION_PLAN),
+      default: SUBSCRIPTION_PLAN.FREE,
+    },
+
+    notificationType: {
+      type: String,
+      enum: Object.values(NOTIFICATION_TYPE),
+      default: NOTIFICATION_TYPE.VIBRATE,
+    },
     status: {
       type: String,
       enum: Object.values(USER_STATUS),
@@ -66,11 +81,11 @@ export const userSchema = new Schema<IUser>(
       default: null,
     },
   },
-  { timestamps: true , versionKey: false}
+  { timestamps: true, versionKey: false }
 );
 
 userSchema.pre('save', async function () {
-   const salt = await bcrypt.genSalt(Number(config.salt_rounds));
+  const salt = await bcrypt.genSalt(Number(config.salt_rounds));
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, salt);
   }

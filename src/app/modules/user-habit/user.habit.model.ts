@@ -70,10 +70,16 @@ const userHabitSchema = new Schema<IUserHabit>(
     },
 
     group: { type: Schema.Types.ObjectId, ref: 'HabitTemplate', default: null },
+
     connectedPrayer: {
       type: String,
       enum: Object.values(CONNECTED_PRAYERS),
       default: null,
+    },
+
+    isPrayerLocked: {
+      type: Boolean,
+      default: true
     },
     location: {
       type: String,
@@ -138,6 +144,11 @@ const userHabitSchema = new Schema<IUserHabit>(
       type: Schema.Types.ObjectId,
       ref: 'QuranContent',
       default: null
+    },
+
+    isPreBuilt: {
+      type: Boolean,
+      default: true
     },
 
     infoContent: {

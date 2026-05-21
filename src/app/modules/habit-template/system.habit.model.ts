@@ -27,6 +27,11 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
       default: null
     },
 
+    isPrayerLocked: {
+      type: Boolean,
+      default: true
+    },
+
     habitType: {
       type: String,
       enum: Object.values(HABIT_TYPES),
@@ -67,7 +72,10 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
       enum: Object.values(HABIT_LEVELS),
       required: true
     },
-
+    isPreBuilt: {
+      type: Boolean,
+      default: true
+    },
     isLocked: {
       type: Boolean,
       default: false

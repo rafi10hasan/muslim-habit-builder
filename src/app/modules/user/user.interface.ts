@@ -1,5 +1,5 @@
 import { Document, Model, Types } from 'mongoose';
-import { TProvider, TUserRole, TUserStatus } from './user.constant';
+import { TNotificationType, TProvider, TSubscriptionPlan, TUserRole, TUserStatus } from './user.constant';
 
 
 export type TProfileImage = {
@@ -28,6 +28,9 @@ export interface IUser extends Document {
   role: TUserRole;
   provider?: TProvider;
   timezone?: string | null;
+  hasNotification: boolean;
+  notificationType: TNotificationType | null;
+  subscriptionPlan: TSubscriptionPlan;
   isSocialLogin: boolean;
   status: TUserStatus;
   disabledAt: Date | null;

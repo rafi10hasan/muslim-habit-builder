@@ -34,6 +34,15 @@ userHabitRouter.post(
     userHabitController.addCustomHabitIntoDb,
 );
 
+userHabitRouter.delete(
+    '/custom/delete/:habitId',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    validateRequest({
+        params: userHabitValidationZodSchema.habitParamsZod,
+    }),
+    userHabitController.deleteCustomHabitFromDb,
+);
+
 userHabitRouter.patch(
     '/update/:habitId',
     authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
@@ -42,6 +51,25 @@ userHabitRouter.patch(
     }),
     userHabitController.updateHabitIntodb,
 );
+
+userHabitRouter.patch(
+    '/complete/:habitId',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    validateRequest({
+        params: userHabitValidationZodSchema.habitParamsZod,
+    }),
+    userHabitController.completeHabitIntoDb,
+);
+
+userHabitRouter.patch(
+    '/skip/:habitId',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    validateRequest({
+        params: userHabitValidationZodSchema.habitParamsZod,
+    }),
+    userHabitController.skipHabitIntoDb,
+);
+
 
 userHabitRouter.get(
     '/search/:habitId',

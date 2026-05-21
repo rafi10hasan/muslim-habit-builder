@@ -18,6 +18,7 @@ export interface IHabitTemplate {
   // Prayer connection (img 3, 4, 15)
   connectedPrayer?: ConnectedPrayer;
   
+  isPrayerLocked: Boolean;
   // Habit type
   habitType: HabitType;
   
@@ -37,8 +38,8 @@ export interface IHabitTemplate {
   
   connectedHabits?: IConnectedHabit[];
   
-  isConnectedObligatoryPrayer: boolean;
-
+  isPreBuilt: boolean;
+  
   isLocked: boolean;
   // Book icon habits (img 16: "book sign will appear next to specific habits")
   infoContent: string | null

@@ -87,11 +87,50 @@ const searchHabitsToConnect = asyncHandler(async (req: Request, res: Response) =
   })
 })
 
+// delete habit
+const deleteCustomHabitFromDb = asyncHandler(async (req: Request, res: Response) => {
+  const { habitId } = req.params;
+  const result = await userHabitService.deleteCustomHabit(req.user, habitId as string);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: USER_HABIT_MESSAGES.DELETED,
+    data: result,
+  });
+})
+
+// completed habit
+
+const completeHabitIntoDb = asyncHandler(async (req: Request, res: Response) => {
+  const { habitId } = req.params;
+  const result = await userHabitService.completedHabit(req.user, habitId as string);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: USER_HABIT_MESSAGES.COMPLETED,
+    data: result,
+  });
+});
+
+const skipHabitIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const { habitId } = req.params;
+    const result = await userHabitService.skippedHabit(req.user, habitId as string);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: USER_HABIT_MESSAGES.SKIPPED,
+        data: result,
+    });
+});
+
 export const userHabitController = {
   addHabitInYourHabitListIntoDb,
   getTodayHabits,
   getHabitDetail,
   updateHabitIntodb,
   addCustomHabitIntoDb,
-  searchHabitsToConnect
+  searchHabitsToConnect,
+  completeHabitIntoDb,
+  deleteCustomHabitFromDb,
+  skipHabitIntoDb
 }
