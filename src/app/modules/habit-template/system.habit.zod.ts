@@ -133,7 +133,7 @@ const createHabitTemplateZod = z.object({
     },
   }),
 
-  infoContent: z.string().min(0, "Info content must be at least 20 characters long").optional(),
+  infoContent: z.string().min(0, "Info content must be at least 20 characters long").nullable().optional(),
 
   adhkarSet: z.string({
     error: 'Adhkar Set ID must be a string',

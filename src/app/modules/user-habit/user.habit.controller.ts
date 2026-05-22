@@ -113,15 +113,30 @@ const completeHabitIntoDb = asyncHandler(async (req: Request, res: Response) => 
 });
 
 const skipHabitIntoDb = asyncHandler(async (req: Request, res: Response) => {
-    const { habitId } = req.params;
-    const result = await userHabitService.skippedHabit(req.user, habitId as string);
-    sendResponse(res, {
-        statusCode: StatusCodes.OK,
-        success: true,
-        message: USER_HABIT_MESSAGES.SKIPPED,
-        data: result,
-    });
+  const { habitId } = req.params;
+  const result = await userHabitService.skippedHabit(req.user, habitId as string);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: USER_HABIT_MESSAGES.SKIPPED,
+    data: result,
+  });
 });
+
+
+const fetchDynamicContentIntoDb = asyncHandler(async (req: Request, res: Response) => {
+
+  const { contentId } = req.params;
+  const result = await userHabitService.getDynamicHabitContent(req.user, contentId as string);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: USER_HABIT_MESSAGES.CONTENT_FETCHED,
+    data: result,
+  });
+});
+
 
 export const userHabitController = {
   addHabitInYourHabitListIntoDb,
@@ -132,5 +147,6 @@ export const userHabitController = {
   searchHabitsToConnect,
   completeHabitIntoDb,
   deleteCustomHabitFromDb,
-  skipHabitIntoDb
+  skipHabitIntoDb,
+  fetchDynamicContentIntoDb
 }

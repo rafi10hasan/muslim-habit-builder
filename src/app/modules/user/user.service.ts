@@ -155,6 +155,7 @@ const updateUserProfileImage = async (user: IUser, files: TProfileImage) => {
 
 
 const updateUserProfile = async (user: IUser, payload: TUserProfileUpdatePayload) => {
+  console.log({ payload })
   const result = await User.findByIdAndUpdate(
     user._id,
     { $set: payload },
@@ -163,11 +164,23 @@ const updateUserProfile = async (user: IUser, payload: TUserProfileUpdatePayload
   return result;
 };
 
+const getUserProfile = async (user: IUser) => {
+  return {
+    fullName: user.fullName,
+    email: user.email,
+    phone: user.phone,
+    avatar: user.avatar,
+    hasNotification: user.hasNotification ?? false,
+    notificationType: user.notificationType,
+    subscriptionPlan: user.subscriptionPlan,
+  };
+}
 
 
 export const userService = {
   createAccount,
   createGuestAccount,
   updateUserProfileImage,
-  updateUserProfile
+  updateUserProfile,
+  getUserProfile,
 };

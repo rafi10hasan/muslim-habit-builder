@@ -6,8 +6,9 @@ export interface IBug{
     reporter: Types.ObjectId;
     title: string;
     description: string;
-    isSolved: boolean;
+    status: 'pending' | 'in_progress' | 'resolved';
     bugImages: string[];
     createdAt: Date;
     updatedAt: Date;
+    
 }

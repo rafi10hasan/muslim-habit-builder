@@ -84,6 +84,14 @@ const updateUserProfileSchema = z.object({
     .max(30, 'Full name cannot exceed 30 characters')
     .regex(/^[a-zA-Z\s]+$/, 'Full name can only contain letters and spaces').optional(),
 
+  phone: z.string({
+    error: (issue) => {
+      if (issue.input === undefined) return 'Phone number is required';
+      if (typeof issue.input !== 'string') return 'Phone number must be a string';
+      return 'Invalid phone number format';
+    },
+  })
+    .regex(/^[0-9]+$/, "Phone number must contain only numbers").optional(),
 
   hasNotification: z.boolean().optional(),
 
@@ -140,7 +148,8 @@ export type TRegistrationPayload = z.infer<
 const userValidationZodSchema = {
   createAuthSchema,
   createSocialAuthSchema,
-  updateUserLocationSchema
+  updateUserLocationSchema,
+  updateUserProfileSchema
 };
 
 export default userValidationZodSchema;

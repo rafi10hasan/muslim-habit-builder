@@ -84,5 +84,11 @@ userHabitRouter.get(
     userHabitController.getHabitDetail,
 );
 
+userHabitRouter.get(
+    '/content/:contentId',
+    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    userHabitController.fetchDynamicContentIntoDb,
+);
+
 
 export default userHabitRouter;

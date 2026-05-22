@@ -2,8 +2,12 @@ import moment from 'moment-timezone';
 import mongoose, { Types } from 'mongoose';
 import { ConnectedPrayer, HabitCategory } from '../../../interfaces';
 import { BadRequestError, NotFoundError } from '../../errors/request/apiError';
+import { AdhkarSet } from '../adhkar-set/adhkar.set.model';
+import { LOG_STATUSES } from '../habit-logs/habit.log.constant';
 import { HabitLog } from '../habit-logs/habit.log.model';
+import { HABIT_TYPES } from '../habit-template/system.habit.constant';
 import { HabitTemplate } from '../habit-template/system.habit.model';
+import { QuranContent } from '../quran-content/quran.content.model';
 import { IUser } from '../user/user.interface';
 import { FREQUENCY_TYPES, WeekDay } from './user.habit.constant';
 import { IConnectedHabit, IFrequency } from './user.habit.interface';
@@ -532,6 +536,727 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
 };
 
 
+
+const getTodayHabits = async (user: IUser, category?: string) => {
+    const userId = user._id as Types.ObjectId;
+
+    // 1. 'date' variable is now a pure string (e.g., "2026-05-21")
+    const dateStr = buildDateBasedOnTimeZone(user.timezone as string);
+
+    // Get today's day name (mon, tue, wed...)
+    const todayDayName = moment(dateStr)
+        .format('ddd')
+        .toLowerCase() as WeekDay;
+
+    // Fetch all active habits first to identify connected habit IDs
+    const allActiveHabits = await UserHabit.find({
+        user: userId,
+        isActive: true,
+    }).select('_id connectedHabits').lean();
+
+    // Store all connected habit IDs inside a Set for faster lookup
+    const connectedHabitIds = new Set(
+        allActiveHabits.flatMap(h =>
+            (h.connectedHabits ?? []).map((c: any) => c.userHabit?.toString()),
+        ),
+    );
+
+    const filter: any = {
+        user: userId,
+        isActive: true,
+        _id: { $nin: [...connectedHabitIds] },
+    };
+
+    if (category && category.toLowerCase() !== 'all') {
+        filter.category = { $regex: new RegExp(`^${category}$`, 'i') };
+    }
+
+    const habits = await UserHabit.find(filter)
+        .select('_id name category connectedHabits habitType infoContent adhkarSet quranContent customDetails frequency startDate')
+        .populate({
+            path: 'connectedHabits.userHabit',
+            select: '_id name category frequency startDate adhkarSet quranContent customDetails infoContent habitType',
+        })
+        .sort({ displayOrder: 1 })
+        .lean();
+
+    // ─────────────────────────────────────────────────────────
+    //  FREQUENCY CHECK HELPER
+    // ─────────────────────────────────────────────────────────
+    const shouldShowToday = (frequency: IFrequency, startDate: Date): boolean => {
+        switch (frequency.type) {
+            case FREQUENCY_TYPES.DAILY:
+                return true;
+
+            case FREQUENCY_TYPES.WEEKLY: {
+                if (!frequency.selectedDays?.length) return false;
+                return frequency.selectedDays.includes(todayDayName);
+            }
+
+            case FREQUENCY_TYPES.EVERY_N_DAYS: {
+                if (!frequency.everyNDays) return false;
+
+                const start = moment(startDate).startOf('day');
+                const today = moment(dateStr).startOf('day');
+
+                const diffDays = today.diff(start, 'days');
+
+                return diffDays >= 0 && diffDays % frequency.everyNDays === 0;
+            }
+
+            default:
+                return true;
+        }
+    };
+
+    // Filter parents based on frequency
+    const todayHabits = habits.filter(h => shouldShowToday(h.frequency, h.startDate));
+
+    const allUserHabitIds = todayHabits.map(h => h._id);
+    const connectedIds = todayHabits.flatMap(h =>
+        (h.connectedHabits ?? [])
+            .filter((c: any) => {
+                const child = c.userHabit;
+                return child?.frequency
+                    ? shouldShowToday(child.frequency, child.startDate)
+                    : true;
+            })
+            .map((c: any) => c.userHabit?._id ?? c.userHabit),
+    );
+
+    const allIds = [...allUserHabitIds, ...connectedIds];
+
+    // Fetch existing habit logs for today using pure string date
+    const existingLogs = await HabitLog.find({
+        userHabit: { $in: allIds },
+        date: dateStr,
+    }).select('userHabit status').lean();
+
+    const logMap = new Map(
+        existingLogs.map(l => [l.userHabit?.toString(), l.status]),
+    );
+
+    // Create logs for missing entries
+    const missingLogIds = allIds.filter(id => !logMap.has(id.toString()));
+    if (missingLogIds.length) {
+        await HabitLog.insertMany(
+            missingLogIds.map(id => ({
+                user: userId,
+                userHabit: id,
+                date: dateStr,
+                status: 'Pending',
+            })),
+        );
+        missingLogIds.forEach(id => logMap.set(id.toString(), 'Pending'));
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  RESPONSE BUILD (FIXED WITH ALL DATA FIELDS)
+    // ─────────────────────────────────────────────────────────
+    const result = todayHabits.map(h => {
+        const connectedHabits = (h.connectedHabits ?? [])
+            .filter((c: any) => {
+                const child = c.userHabit;
+                return child?.frequency
+                    ? shouldShowToday(child.frequency, child.startDate)
+                    : true;
+            })
+            .sort((a: any, b: any) => a.order - b.order)
+            .map((c: any) => {
+                const child = c.userHabit;
+                const childId = child?._id?.toString() ?? c.userHabit?.toString();
+
+                return {
+                    _id: child?._id ?? c.userHabit,
+                    name: child?.name ?? null,
+                    category: child?.category ?? null,
+                    habitType: child?.habitType ?? null,
+                    infoContent: child?.infoContent ?? null,
+                    customDetails: child?.customDetails ?? null,
+                    adhkarSet: child?.adhkarSet ?? null,
+                    quranContent: child?.quranContent ?? null,
+                    frequency: child?.frequency ?? null,
+                    startDate: child?.startDate ?? null,
+                    order: c.order,
+                    status: logMap.get(childId) ?? 'Pending',
+                };
+            });
+
+        const databaseParentStatus = logMap.get(h._id.toString()) ?? 'Pending';
+
+        // 🚀 ABSOLUTE SET COMPLETION ENGINE (Strict Parent & All Children Match)
+        let finalDisplayStatus = 'Pending';
+
+        if (connectedHabits.length > 0) {
+            // ১. Check koro parent nijje complete kina
+            const isParentCompleted = databaseParentStatus === 'Completed';
+
+            // ২. Check koro shobgulo child complete kina
+            const areAllChildrenCompleted = connectedHabits.every(ch => ch.status === 'Completed');
+
+            // 🎯 Rule: Parent EBONG Shob Child complete holei kebol display state 'Completed' hobe
+            if (isParentCompleted && areAllChildrenCompleted) {
+                finalDisplayStatus = 'Completed';
+            } else if (databaseParentStatus === 'Skipped') {
+                // Buffer condition: Jodi parent overall manually skipped mark kora thake
+                finalDisplayStatus = 'Skipped';
+            } else {
+                // Je kono ekta complete na thakle conditional fallback mapping state hobe 'Pending'
+                finalDisplayStatus = 'Pending';
+            }
+        } else {
+            // ৩. Connected habits na thakle parent control standard-ei kaj korbe
+            finalDisplayStatus = databaseParentStatus;
+        }
+
+        return {
+            _id: h._id,
+            name: h.name,
+            category: h.category,
+            habitType: h.habitType,
+            infoContent: h.infoContent,
+            customDetails: h.customDetails,
+            adhkarSet: h.adhkarSet,
+            quranContent: h.quranContent,
+            status: finalDisplayStatus, // Strictly maps to full set completion status
+            connectedHabits,
+        };
+    });
+
+    // ─────────────────────────────────────────────────────────
+    //  SUMMARY GENERATION (STRICT TOTAL MATCH)
+    // ─────────────────────────────────────────────────────────
+    const total = result.length;
+    const completed = result.filter(h => h.status === 'Completed').length;
+    const pending = result.filter(h => h.status === 'Pending').length;
+    const skipped = result.filter(h => h.status === 'Skipped').length;
+
+    const completedHabits = result
+        .filter(h => h.status === 'Completed')
+        .map(h => ({ _id: h._id, name: h.name }));
+
+    return {
+        summary: {
+            total,
+            completed,
+            pending,
+            skipped,
+            label: `${completed} of ${total} completed`,
+        },
+        completedToday: completedHabits,
+        habits: result,
+    };
+};
+
+
+// ─────────────────────────────────────────────────────────────
+//  connectToParent — order এখন existing max থেকে
+// ─────────────────────────────────────────────────────────────
+
+
+// ─────────────────────────────────────────────────────────────
+//  EditHabit — connectedHabits string[] আসবে, order index থেকে set হবে
+// ─────────────────────────────────────────────────────────────
+const updateUserHabit = async (user: IUser, userHabitId: string, payload: EditHabitPayload) => {
+    const userId = user._id as Types.ObjectId;
+    console.log({ payload })
+    const habit = await UserHabit.findOne({
+        _id: userHabitId,
+        user: userId,
+        isActive: true,
+    });
+    if (!habit) throw new NotFoundError('Habit not found');
+
+    if (!habit.isPreBuilt) {
+        habit.name = payload.name ?? habit.name;
+        habit.category = (payload.category as HabitCategory) ?? habit.category;
+        habit.connectedPrayer = (payload.connectedPrayer as ConnectedPrayer) ?? habit.connectedPrayer;
+        habit.customDetails = payload.customDetails ?? habit.customDetails;
+    }
+
+    // Frequency
+    if (payload.frequency) {
+        if (!habit.allowedFrequencies.includes(payload.frequency.type as any)) {
+            throw new BadRequestError(
+                `Frequency '${payload.frequency.type}' is not allowed for this habit`,
+            );
+        }
+        habit.frequency = payload.frequency as any;
+    }
+
+    // Reminder
+    if (payload.reminder !== undefined) {
+        habit.reminder = payload.reminder as any;
+    }
+
+    // StartDate
+    if (payload.startDate !== undefined) {
+        habit.startDate = payload.startDate;
+    }
+
+    // Location
+    if (payload.location !== undefined) {
+        habit.location = payload.location as any;
+    }
+
+    // showOnTodayScreen
+    if (payload.customDetails !== undefined) {
+        habit.showOnTodayScreen = true;
+    }
+
+    if (payload.customDetails !== undefined || habit.customDetails !== "") {
+        habit.customDetails = payload.customDetails;
+    }
+    // Connected habits — only for obligatory_prayer
+    // if (payload.connectedHabits !== undefined) {
+    //     if (habit.habitType !== 'obligatory_prayer') {
+    //         throw new BadRequestError('Only obligatory prayers can have connected habits');
+    //     }
+
+    //     if (payload.connectedHabits.length) {
+    //         // Validate সব ids এই user এর active habits
+    //         const validHabits = await UserHabit.find({
+    //             _id: { $in: payload.connectedHabits },
+    //             user: userId,
+    //             isActive: true,
+    //         }).select('_id').lean();
+
+    //         if (validHabits.length !== payload.connectedHabits.length) {
+    //             throw new BadRequestError(
+    //                 'One or more connected habits are invalid or inactive',
+    //             );
+    //         }
+    //     }
+
+    //     // Remove হওয়া habits এর parent null করো
+    //     const oldIds = (habit.connectedHabits ?? []).map(c => c.userHabit.toString());
+    //     const newIds = payload.connectedHabits.map(c => c.userHabit.toString());
+    //     const removedIds = oldIds.filter(id => !newIds.includes(id));
+
+    //     if (removedIds.length) {
+    //         await UserHabit.updateMany(
+    //             { _id: { $in: removedIds }, user: userId },
+    //             { $set: { parent: null } },
+    //         );
+    //         // Parent এর connectedHabits থেকেও disconnect
+    //         await Promise.all(removedIds.map(id =>
+    //             disconnectFromParents(new Types.ObjectId(id))
+    //         ));
+    //     }
+
+    //     // নতুন ids এর parent set করো
+    //     const addedIds = newIds.filter(id => !oldIds.includes(id));
+    //     if (addedIds.length) {
+    //         await UserHabit.updateMany(
+    //             { _id: { $in: addedIds }, user: userId },
+    //             { $set: { parent: habit.template } },
+    //         );
+    //     }
+
+    //     // Array index থেকে order set করো
+    //     habit.connectedHabits = payload.connectedHabits.map((item, index) => ({
+    //         userHabit: new Types.ObjectId(item.userHabit),
+    //         order: item.order ?? index + 1,
+    //     }));
+    // }
+
+    if (payload.connectedHabits !== undefined) {
+        if (habit.habitType !== 'obligatory_prayer') {
+            throw new BadRequestError('Only obligatory prayers can have connected habits');
+        }
+
+        const inputIds = payload.connectedHabits; // Full array of IDs the frontend wants to keep/add
+        const existingConnectedHabits = habit.connectedHabits ?? [];
+
+        // 1. Separate out what needs to be REMOVED vs what is NEW
+        const existingIds = existingConnectedHabits.map(c => c.userHabit.toString());
+
+        // IDs in existing but NOT in inputIds are being removed
+        const idsToRemove = existingIds.filter(id => !inputIds.includes(id));
+        // IDs in inputIds but NOT in existing are new additions
+        const uniqueNewIds = inputIds.filter(id => !existingIds.includes(id));
+
+        // 2. Handle Removals: Clear their parent template in the database
+        if (idsToRemove.length) {
+            await UserHabit.updateMany(
+                { _id: { $in: idsToRemove }, user: userId },
+                { $unset: { parent: "" } } // or $set: { parent: null } depending on your schema
+            );
+        }
+
+        // 3. Handle Additions & Validations
+        if (uniqueNewIds.length) {
+            const validHabits = await UserHabit.find({
+                _id: { $in: uniqueNewIds },
+                user: userId,
+                isActive: true,
+            }).select('_id').lean();
+
+            if (validHabits.length !== uniqueNewIds.length) {
+                throw new BadRequestError('One or more connected habits are invalid or inactive');
+            }
+
+            // Set parent template for new additions
+            await UserHabit.updateMany(
+                { _id: { $in: uniqueNewIds }, user: userId },
+                { $set: { parent: habit.template } },
+            );
+        }
+
+        // 4. Build the final array maintaining original orders or re-sequencing everything
+        // Filter out the deleted habits from the local subdocument array first
+        let updatedConnectedHabits = existingConnectedHabits.filter(
+            item => !idsToRemove.includes(item.userHabit.toString())
+        );
+
+        // Find the max order among remaining items
+        const maxOrder = updatedConnectedHabits.reduce(
+            (max, item) => (item.order > max ? item.order : max),
+            0
+        );
+
+        // Map new items sequentially
+        const formattedNewHabits = uniqueNewIds.map((id, index) => ({
+            userHabit: new Types.ObjectId(id),
+            order: maxOrder + index + 1,
+        }));
+
+        // 5. Save the final state back to the habit document
+        habit.connectedHabits = [...updatedConnectedHabits, ...formattedNewHabits];
+    }
+
+    await habit.save();
+
+    return {
+        _id: habit._id,
+        name: habit.name,
+    };
+};
+
+
+// Get Habit Detail
+const getHabitDetail = async (user: IUser, userHabitId: string) => {
+    const userId = user._id as Types.ObjectId;
+
+    const habit = await UserHabit.findOne({
+        _id: userHabitId,
+        user: userId,
+        isActive: true,
+    })
+        .populate({
+            path: 'connectedHabits.userHabit',
+            select: '_id name category habitType isLocked',
+        })
+        .lean();
+    console.log({ habit })
+    if (!habit) throw new NotFoundError('Habit not found or habit is not active');
+
+    const isObligatoryPrayer = habit.habitType === HABIT_TYPES.OBLIGATORY_PRAYER;
+
+    return {
+        _id: habit._id,
+        name: habit.name,
+        category: habit.category,
+        habitType: habit.habitType,
+        connectedPrayer: habit.connectedPrayer ?? null,
+        isPrayerLocked: habit.isPrayerLocked ?? false,
+        location: habit.location ?? null,
+        frequency: habit.frequency,
+        isPreBuilt: habit.isPreBuilt,
+        allowedFrequencies: habit.allowedFrequencies,
+        reminder: habit.reminder,
+        startDate: habit.startDate,
+        showOnTodayScreen: habit.showOnTodayScreen,
+        isLocked: habit.isLocked,
+        customDetails: habit.customDetails ?? null,
+        // obligatory_prayer হলেই connectedHabits দেখাবে
+        connectedHabits: isObligatoryPrayer
+            ? (habit.connectedHabits ?? [])
+                .sort((a, b) => a.order - b.order)
+                .map((c: any) => ({
+                    _id: c.userHabit?._id ?? c.userHabit,
+                    name: c.userHabit?.name ?? null,
+                    category: c.userHabit?.category ?? null,
+                    habitType: c.userHabit?.habitType ?? null,
+                    isLocked: c.userHabit?.isLocked ?? false,
+                }))
+            : undefined,
+    };
+};
+
+
+// ─────────────────────────────────────────────────────────────
+//  3. ADD CUSTOM HABIT
+// ─────────────────────────────────────────────────────────────
+const addCustomHabit = async (user: IUser, payload: AddCustomHabitPayload) => {
+
+    console.log({ payload })
+
+    const userId = user._id as Types.ObjectId;
+    const date = buildDateBasedOnTimeZone(user.timezone as string);
+
+
+    // Duplicate name check for this user
+    const duplicate = await UserHabit.exists({
+        user: userId,
+        name: { $regex: new RegExp(`^${payload.name.trim()}$`, 'i') },
+    });
+
+    if (duplicate) throw new BadRequestError('You already have a habit with this name');
+
+    console.log({ payload })
+
+    const newHabit = await UserHabit.create({
+        user: userId,
+        template: null,
+        name: payload.name.trim(),
+        category: payload.category,
+        isPrayerLocked: false,
+        isPreBuilt: false,
+        connectedPrayer: payload.connectedPrayer ?? null,
+        location: payload.location ?? 'Home',
+        frequency: payload.frequency,
+        allowedFrequencies: [FREQUENCY_TYPES.DAILY, FREQUENCY_TYPES.WEEKLY, FREQUENCY_TYPES.EVERY_N_DAYS],
+        reminder: payload.reminder ?? { enabled: false, time: '12:00 AM' },
+        startDate: payload.startDate ? new Date(payload.startDate) : new Date(),
+        showOnTodayScreen: payload.customDetails ? true : false,
+        customDetails: payload.customDetails ?? null,
+        parent: null,
+        group: null,
+        isLocked: false,
+        infoContent: null,
+        adhkarSet: null,
+        quranContent: null,
+        connectedHabits: [],
+    });
+
+    await HabitLog.create({
+        user: userId,
+        userHabit: newHabit._id,
+        date: String(date),
+        status: 'Pending',
+    });
+
+    return {
+        _id: newHabit._id,
+        name: newHabit.name,
+    };
+};
+
+// ─────────────────────────────────────────────────────────────
+//  4. SEARCH HABITS TO CONNECT
+// ─────────────────────────────────────────────────────────────
+
+const searchHabitsToConnect = async (
+    user: IUser,
+    userHabitId: string,
+    searchTerm?: string,
+) => {
+    const userId = user._id as Types.ObjectId;
+
+    // Parent habit validate করো
+    const parentHabit = await UserHabit.findOne({
+        _id: userHabitId,
+        user: userId,
+        isActive: true,
+        habitType: HABIT_TYPES.OBLIGATORY_PRAYER,
+    }).select('_id connectedHabits').lean();
+
+    if (!parentHabit) throw new NotFoundError('Habit not found or not an obligatory prayer');
+
+    // Already connected ids
+    const alreadyConnectedIds = (parentHabit.connectedHabits ?? []).map(
+        c => c.userHabit.toString(),
+    );
+
+    const filter: any = {
+        user: userId,
+        isActive: true,
+        habitType: { $nin: [HABIT_TYPES.OBLIGATORY_PRAYER, HABIT_TYPES.SUNNAH_PRAYER] },
+        _id: { $nin: [userHabitId, ...alreadyConnectedIds] },
+    };
+
+    if (searchTerm?.trim()) {
+        filter.name = { $regex: new RegExp(searchTerm.trim(), 'i') };
+    }
+
+    const habits = await UserHabit.find(filter)
+        .select('_id name category habitType')
+        .limit(20)
+        .lean();
+
+    return habits.map(h => ({
+        _id: h._id,
+        name: h.name,
+        category: h.category,
+        habitType: h.habitType,
+    }));
+};
+
+const deleteCustomHabit = async (user: IUser, habitId: string) => {
+
+    const habit = await UserHabit.findById(habitId);
+    if (!habit) {
+        throw new NotFoundError('Habit not found');
+    }
+    if (habit.isPreBuilt) {
+        throw new BadRequestError('Pre built habits cannot be deleted');
+    }
+    if (habit.user.toString() !== user._id.toString()) {
+        throw new BadRequestError('You can only delete your own habits');
+    }
+
+    const session = await mongoose.startSession();
+    try {
+        session.startTransaction();
+        // 1. Delete the habit
+        await UserHabit.deleteOne({ _id: habitId }, { session });
+        // 2. Delete associated habit logs
+        await HabitLog.deleteMany({ userHabit: habitId }, { session });
+        await session.commitTransaction();
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        await session.endSession();
+    }
+
+};
+
+
+// completed habit 
+const completedHabit = async (user: IUser, habitId: string) => {
+
+    const userId = user._id;
+    const dateStr = buildDateBasedOnTimeZone(user.timezone as string);
+    // Database entry khujo ba update koro
+
+    const habit = await UserHabit.findById(habitId);
+    if (!habit) {
+        throw new NotFoundError('Habit not found');
+    }
+
+    let log = await HabitLog.findOne({
+        user: userId,
+        userHabit: habitId,
+        date: dateStr
+    });
+
+    if (!log) {
+        // Fresh initialization line setup tracking
+        log = new HabitLog({
+            user: userId,
+            userHabit: habitId,
+            date: dateStr,
+            status: LOG_STATUSES.PENDING // Initial state setting
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  TOGGLE CORE LOGIC ENGINE
+    // ─────────────────────────────────────────────────────────
+    if (log.status === LOG_STATUSES.COMPLETED) {
+        // If already Completed, toggle back to Pending state
+        log.status = LOG_STATUSES.PENDING;
+        log.completedAt = null;
+        log.skippedAt = null;
+        log.locationLogged = null; // Reset location data if required
+    } else {
+        // If Pending or Skipped, transition directly to Completed
+        log.status = LOG_STATUSES.COMPLETED;
+        log.completedAt = new Date();
+        log.skippedAt = null; // Clear skip tracking if it was skipped before
+    }
+    await log.save();
+    return log;
+}
+
+
+// skipped habit
+const skippedHabit = async (user: IUser, habitId: string) => {
+
+    const userId = user._id;
+    const dateStr = buildDateBasedOnTimeZone(user.timezone as string);
+    // Database entry khujo ba update koro
+
+    const habit = await UserHabit.findById(habitId).select('_id');
+    if (!habit) {
+        throw new NotFoundError('Habit not found');
+    }
+
+    let log = await HabitLog.findOne({
+        user: userId,
+        userHabit: habitId,
+        date: dateStr
+    });
+
+    if (!log) {
+        // Fresh initialization line setup tracking
+        log = new HabitLog({
+            user: userId,
+            userHabit: habitId,
+            date: dateStr,
+            status: LOG_STATUSES.PENDING // Initial state setting
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  TOGGLE CORE LOGIC ENGINE
+    // ─────────────────────────────────────────────────────────
+    if (log.status === LOG_STATUSES.SKIPPED) {
+        // If already Skipped, toggle back to Pending state
+        log.status = LOG_STATUSES.PENDING;
+        log.skippedAt = null;
+        log.locationLogged = null; // Reset location data if required
+    } else {
+        // If Pending or Skipped, transition directly to Skipped
+        log.status = LOG_STATUSES.SKIPPED;
+        log.skippedAt = new Date();
+    }
+    await log.save();
+    return log;
+}
+
+// get content
+
+const getDynamicHabitContent = async (user: IUser, contentId: string) => {
+
+    const quranData = await QuranContent.findById(contentId).lean();
+    console.log({ quranData })
+    // ১. Quran content check matrix mapping parsing query log format
+    if (quranData) {
+        return quranData
+    }
+    const adhkarData = await AdhkarSet.findById(contentId).lean();
+    console.log({ adhkarData })
+    // ২. Adhkar set content data tracking verification flow
+    if (adhkarData) {
+        return adhkarData
+    }
+    console.log("Mongoose registered collection names:", mongoose.connection.modelNames());
+    // ৩. Error logging block framework handling standard query match exception
+    throw new NotFoundError('Content details not found in either Quran or Adhkar records');
+
+};
+
+export const userHabitService = {
+    toggleHabit,
+    getTodayHabits,
+    updateUserHabit,
+    addCustomHabit,
+    searchHabitsToConnect,
+    getHabitDetail,
+    deleteCustomHabit,
+    completedHabit,
+    skippedHabit,
+    getDynamicHabitContent,
+};
+
+
+
+
+
+/*
 // get today habits
 // const getTodayHabits = async (user: IUser, category?: string) => {
 //     const userId = user._id as Types.ObjectId;
@@ -818,639 +1543,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
 //     };
 // };
 
-const getTodayHabits = async (user: IUser, category?: string) => {
-    const userId = user._id as Types.ObjectId;
-
-    // 1. 'date' variable is now a pure string (e.g., "2026-05-21")
-    const dateStr = buildDateBasedOnTimeZone(user.timezone as string);
-
-    // Get today's day name (mon, tue, wed...)
-    const todayDayName = moment(dateStr)
-        .format('ddd')
-        .toLowerCase() as WeekDay;
-
-    // Fetch all active habits first to identify connected habit IDs
-    const allActiveHabits = await UserHabit.find({
-        user: userId,
-        isActive: true,
-    }).select('_id connectedHabits').lean();
-
-    // Store all connected habit IDs inside a Set for faster lookup
-    const connectedHabitIds = new Set(
-        allActiveHabits.flatMap(h =>
-            (h.connectedHabits ?? []).map((c: any) => c.userHabit?.toString()),
-        ),
-    );
-
-    const filter: any = {
-        user: userId,
-        isActive: true,
-        _id: { $nin: [...connectedHabitIds] },
-    };
-
-    if (category && category.toLowerCase() !== 'all') {
-        filter.category = { $regex: new RegExp(`^${category}$`, 'i') };
-    }
-
-    const habits = await UserHabit.find(filter)
-        .select('_id name category connectedHabits habitType infoContent adhkarSet quranContent customDetails frequency startDate')
-        .populate({
-            path: 'connectedHabits.userHabit',
-            select: '_id name category frequency startDate adhkarSet quranContent customDetails infoContent habitType',
-        })
-        .sort({ displayOrder: 1 })
-        .lean();
-
-    // ─────────────────────────────────────────────────────────
-    //  FREQUENCY CHECK HELPER
-    // ─────────────────────────────────────────────────────────
-    const shouldShowToday = (frequency: IFrequency, startDate: Date): boolean => {
-        switch (frequency.type) {
-            case FREQUENCY_TYPES.DAILY:
-                return true;
-
-            case FREQUENCY_TYPES.WEEKLY: {
-                if (!frequency.selectedDays?.length) return false;
-                return frequency.selectedDays.includes(todayDayName);
-            }
-
-            case FREQUENCY_TYPES.EVERY_N_DAYS: {
-                if (!frequency.everyNDays) return false;
-
-                const start = moment(startDate).startOf('day');
-                const today = moment(dateStr).startOf('day');
-
-                const diffDays = today.diff(start, 'days');
-
-                return diffDays >= 0 && diffDays % frequency.everyNDays === 0;
-            }
-
-            default:
-                return true;
-        }
-    };
-
-    // Filter parents based on frequency
-    const todayHabits = habits.filter(h => shouldShowToday(h.frequency, h.startDate));
-
-    const allUserHabitIds = todayHabits.map(h => h._id);
-    const connectedIds = todayHabits.flatMap(h =>
-        (h.connectedHabits ?? [])
-            .filter((c: any) => {
-                const child = c.userHabit;
-                return child?.frequency
-                    ? shouldShowToday(child.frequency, child.startDate)
-                    : true;
-            })
-            .map((c: any) => c.userHabit?._id ?? c.userHabit),
-    );
-
-    const allIds = [...allUserHabitIds, ...connectedIds];
-
-    // Fetch existing habit logs for today using pure string date
-    const existingLogs = await HabitLog.find({
-        userHabit: { $in: allIds },
-        date: dateStr,
-    }).select('userHabit status').lean();
-
-    const logMap = new Map(
-        existingLogs.map(l => [l.userHabit?.toString(), l.status]),
-    );
-
-    // Create logs for missing entries
-    const missingLogIds = allIds.filter(id => !logMap.has(id.toString()));
-    if (missingLogIds.length) {
-        await HabitLog.insertMany(
-            missingLogIds.map(id => ({
-                user: userId,
-                userHabit: id,
-                date: dateStr,
-                status: 'Pending',
-            })),
-        );
-        missingLogIds.forEach(id => logMap.set(id.toString(), 'Pending'));
-    }
-
-    // ─────────────────────────────────────────────────────────
-    //  RESPONSE BUILD (FIXED WITH ALL DATA FIELDS)
-    // ─────────────────────────────────────────────────────────
-    const result = todayHabits.map(h => {
-        const connectedHabits = (h.connectedHabits ?? [])
-            .filter((c: any) => {
-                const child = c.userHabit;
-                return child?.frequency
-                    ? shouldShowToday(child.frequency, child.startDate)
-                    : true;
-            })
-            .sort((a: any, b: any) => a.order - b.order)
-            .map((c: any) => {
-                const child = c.userHabit; // Populated child object
-                const childId = child?._id?.toString() ?? c.userHabit?.toString();
-
-                // MAP ALL EXTENDED PROPERTIES HERE FOR POSTMAN RESPONSE
-                return {
-                    _id: child?._id ?? c.userHabit,
-                    name: child?.name ?? null,
-                    category: child?.category ?? null,
-                    habitType: child?.habitType ?? null,
-                    infoContent: child?.infoContent ?? null,
-                    customDetails: child?.customDetails ?? null,
-                    adhkarSet: child?.adhkarSet ?? null,
-                    quranContent: child?.quranContent ?? null,
-                    frequency: child?.frequency ?? null,
-                    startDate: child?.startDate ?? null,
-                    order: c.order,
-                    status: logMap.get(childId) ?? 'Pending',
-                };
-            });
-
-        const parentStatus = logMap.get(h._id.toString()) ?? 'Pending';
-
-        return {
-            _id: h._id,
-            name: h.name,
-            category: h.category,
-            habitType: h.habitType,
-            infoContent: h.infoContent,
-            customDetails: h.customDetails,
-            adhkarSet: h.adhkarSet,
-            quranContent: h.quranContent,
-            status: parentStatus,
-            connectedHabits,
-        };
-    });
-
-    // ─────────────────────────────────────────────────────────
-    //  SUMMARY
-    // ─────────────────────────────────────────────────────────
-    const total = result.length;
-    const completed = result.filter(h => h.status === 'Completed').length;
-    const pending = result.filter(h => h.status === 'Pending').length;
-    const skipped = result.filter(h => h.status === 'Skipped').length;
-
-    const completedHabits = result
-        .filter(h => h.status === 'Completed')
-        .map(h => ({ _id: h._id, name: h.name }));
-
-    return {
-        summary: {
-            total,
-            completed,
-            pending,
-            skipped,
-            label: `${completed} of ${total} completed`,
-        },
-        completedToday: completedHabits,
-        habits: result, // Properly sends out the mapped response schema array
-    };
-};
-
-
-// ─────────────────────────────────────────────────────────────
-//  connectToParent — order এখন existing max থেকে
-// ─────────────────────────────────────────────────────────────
-
-
-// ─────────────────────────────────────────────────────────────
-//  EditHabit — connectedHabits string[] আসবে, order index থেকে set হবে
-// ─────────────────────────────────────────────────────────────
-const updateUserHabit = async (user: IUser, userHabitId: string, payload: EditHabitPayload) => {
-    const userId = user._id as Types.ObjectId;
-    console.log({ payload })
-    const habit = await UserHabit.findOne({
-        _id: userHabitId,
-        user: userId,
-        isActive: true,
-    });
-    if (!habit) throw new NotFoundError('Habit not found');
-
-    if (!habit.isPreBuilt) {
-        habit.name = payload.name ?? habit.name;
-        habit.category = (payload.category as HabitCategory) ?? habit.category;
-        habit.connectedPrayer = (payload.connectedPrayer as ConnectedPrayer) ?? habit.connectedPrayer;
-        habit.customDetails = payload.customDetails ?? habit.customDetails;
-    }
-
-    // Frequency
-    if (payload.frequency) {
-        if (!habit.allowedFrequencies.includes(payload.frequency.type as any)) {
-            throw new BadRequestError(
-                `Frequency '${payload.frequency.type}' is not allowed for this habit`,
-            );
-        }
-        habit.frequency = payload.frequency as any;
-    }
-
-    // Reminder
-    if (payload.reminder !== undefined) {
-        habit.reminder = payload.reminder as any;
-    }
-
-    // StartDate
-    if (payload.startDate !== undefined) {
-        habit.startDate = payload.startDate;
-    }
-
-    // Location
-    if (payload.location !== undefined) {
-        habit.location = payload.location as any;
-    }
-
-    // showOnTodayScreen
-    if (payload.customDetails !== undefined) {
-        habit.showOnTodayScreen = true;
-    }
-
-    if (payload.customDetails !== undefined || habit.customDetails !== "") {
-        habit.customDetails = payload.customDetails;
-    }
-    // Connected habits — only for obligatory_prayer
-    // if (payload.connectedHabits !== undefined) {
-    //     if (habit.habitType !== 'obligatory_prayer') {
-    //         throw new BadRequestError('Only obligatory prayers can have connected habits');
-    //     }
-
-    //     if (payload.connectedHabits.length) {
-    //         // Validate সব ids এই user এর active habits
-    //         const validHabits = await UserHabit.find({
-    //             _id: { $in: payload.connectedHabits },
-    //             user: userId,
-    //             isActive: true,
-    //         }).select('_id').lean();
-
-    //         if (validHabits.length !== payload.connectedHabits.length) {
-    //             throw new BadRequestError(
-    //                 'One or more connected habits are invalid or inactive',
-    //             );
-    //         }
-    //     }
-
-    //     // Remove হওয়া habits এর parent null করো
-    //     const oldIds = (habit.connectedHabits ?? []).map(c => c.userHabit.toString());
-    //     const newIds = payload.connectedHabits.map(c => c.userHabit.toString());
-    //     const removedIds = oldIds.filter(id => !newIds.includes(id));
-
-    //     if (removedIds.length) {
-    //         await UserHabit.updateMany(
-    //             { _id: { $in: removedIds }, user: userId },
-    //             { $set: { parent: null } },
-    //         );
-    //         // Parent এর connectedHabits থেকেও disconnect
-    //         await Promise.all(removedIds.map(id =>
-    //             disconnectFromParents(new Types.ObjectId(id))
-    //         ));
-    //     }
-
-    //     // নতুন ids এর parent set করো
-    //     const addedIds = newIds.filter(id => !oldIds.includes(id));
-    //     if (addedIds.length) {
-    //         await UserHabit.updateMany(
-    //             { _id: { $in: addedIds }, user: userId },
-    //             { $set: { parent: habit.template } },
-    //         );
-    //     }
-
-    //     // Array index থেকে order set করো
-    //     habit.connectedHabits = payload.connectedHabits.map((item, index) => ({
-    //         userHabit: new Types.ObjectId(item.userHabit),
-    //         order: item.order ?? index + 1,
-    //     }));
-    // }
-
-    if (payload.connectedHabits !== undefined) {
-        if (habit.habitType !== 'obligatory_prayer') {
-            throw new BadRequestError('Only obligatory prayers can have connected habits');
-        }
-
-        const inputIds = payload.connectedHabits; // New habit IDs incoming from the request payload (e.g., Postman)
-
-        if (inputIds.length) {
-            // 1. Get the list of currently connected habit IDs and determine the maximum order
-            const existingConnectedHabits = habit.connectedHabits ?? [];
-            const existingIds = existingConnectedHabits.map(c => c.userHabit.toString());
-
-            // 2. Filter out input IDs that are already connected to prevent duplicates
-            const uniqueNewIds = inputIds.filter(id => !existingIds.includes(id));
-
-            if (uniqueNewIds.length) {
-                // 3. Validation: Check if the new IDs are active habits belonging to this user
-                const validHabits = await UserHabit.find({
-                    _id: { $in: uniqueNewIds },
-                    user: userId,
-                    isActive: true,
-                }).select('_id').lean();
-
-                if (validHabits.length !== uniqueNewIds.length) {
-                    throw new BadRequestError(
-                        'One or more connected habits are invalid or inactive',
-                    );
-                }
-
-                // 4. Set the parent template for the newly connected child habits
-                await UserHabit.updateMany(
-                    { _id: { $in: uniqueNewIds }, user: userId },
-                    { $set: { parent: habit.template } },
-                );
-
-                // 5. Find the current highest order (maxOrder) among existing connected habits
-                const maxOrder = existingConnectedHabits.reduce(
-                    (max, item) => (item.order > max ? item.order : max),
-                    0
-                );
-
-                // 6. Map the new IDs into objects with sequentially incremented display order
-                const formattedNewHabits = uniqueNewIds.map((id, index) => ({
-                    userHabit: new Types.ObjectId(id),
-                    order: maxOrder + index + 1, // Start ordering sequentially right after the previous maxOrder
-                }));
-
-                // 7. Append the formatted new habits to the existing array
-                habit.connectedHabits = [...existingConnectedHabits, ...formattedNewHabits];
-            }
-        }
-    }
-
-    await habit.save();
-
-    return {
-        _id: habit._id,
-        name: habit.name,
-    };
-};
-
-
-
-// Get Habit Detail
-const getHabitDetail = async (user: IUser, userHabitId: string) => {
-    const userId = user._id as Types.ObjectId;
-
-    const habit = await UserHabit.findOne({
-        _id: userHabitId,
-        user: userId,
-        isActive: true,
-    })
-        .populate({
-            path: 'connectedHabits.userHabit',
-            select: '_id name category habitType isLocked',
-        })
-        .lean();
-
-    if (!habit) throw new NotFoundError('Habit not found');
-
-    const isObligatoryPrayer = habit.habitType === 'obligatory_prayer';
-
-    return {
-        _id: habit._id,
-        name: habit.name,
-        category: habit.category,
-        habitType: habit.habitType,
-        connectedPrayer: habit.connectedPrayer ?? null,
-        isPrayerLocked: habit.isPrayerLocked ?? false,
-        location: habit.location ?? null,
-        frequency: habit.frequency,
-        isPreBuilt: habit.isPreBuilt,
-        allowedFrequencies: habit.allowedFrequencies,
-        reminder: habit.reminder,
-        startDate: habit.startDate,
-        showOnTodayScreen: habit.showOnTodayScreen,
-        isLocked: habit.isLocked,
-        customDetails: habit.customDetails ?? null,
-        // obligatory_prayer হলেই connectedHabits দেখাবে
-        connectedHabits: isObligatoryPrayer
-            ? (habit.connectedHabits ?? [])
-                .sort((a, b) => a.order - b.order)
-                .map((c: any) => ({
-                    _id: c.userHabit?._id ?? c.userHabit,
-                    name: c.userHabit?.name ?? null,
-                    category: c.userHabit?.category ?? null,
-                    habitType: c.userHabit?.habitType ?? null,
-                    isLocked: c.userHabit?.isLocked ?? false,
-                }))
-            : undefined,
-    };
-};
-
-
-// ─────────────────────────────────────────────────────────────
-//  3. ADD CUSTOM HABIT
-// ─────────────────────────────────────────────────────────────
-const addCustomHabit = async (user: IUser, payload: AddCustomHabitPayload) => {
-
-    console.log({ payload })
-
-    const userId = user._id as Types.ObjectId;
-    const date = buildDateBasedOnTimeZone(user.timezone as string);
-
-
-    // Duplicate name check for this user
-    const duplicate = await UserHabit.exists({
-        user: userId,
-        name: { $regex: new RegExp(`^${payload.name.trim()}$`, 'i') },
-    });
-
-    if (duplicate) throw new BadRequestError('You already have a habit with this name');
-
-    console.log({ payload })
-
-    const newHabit = await UserHabit.create({
-        user: userId,
-        template: null,
-        name: payload.name.trim(),
-        category: payload.category,
-        isPrayerLocked: false,
-        isPreBuilt: false,
-        connectedPrayer: payload.connectedPrayer ?? null,
-        location: payload.location ?? 'Home',
-        frequency: payload.frequency,
-        allowedFrequencies: [payload.frequency.type],
-        reminder: payload.reminder ?? { enabled: false, time: '12:00 AM' },
-        startDate: payload.startDate ? new Date(payload.startDate) : new Date(),
-        showOnTodayScreen: payload.customDetails ? true : false,
-        customDetails: payload.customDetails ?? null,
-        parent: null,
-        group: null,
-        isLocked: false,
-        infoContent: null,
-        adhkarSet: null,
-        quranContent: null,
-        connectedHabits: [],
-    });
-
-    await HabitLog.create({
-        user: userId,
-        userHabit: newHabit._id,
-        date: String(date),
-        status: 'Pending',
-    });
-
-    return {
-        _id: newHabit._id,
-        name: newHabit.name,
-    };
-};
-
-// ─────────────────────────────────────────────────────────────
-//  4. SEARCH HABITS TO CONNECT
-// ─────────────────────────────────────────────────────────────
-
-const searchHabitsToConnect = async (
-    user: IUser,
-    userHabitId: string,
-    searchTerm?: string,
-) => {
-    const userId = user._id as Types.ObjectId;
-
-    // Parent habit validate করো
-    const parentHabit = await UserHabit.findOne({
-        _id: userHabitId,
-        user: userId,
-        isActive: true,
-        habitType: 'obligatory_prayer',
-    }).select('_id connectedHabits').lean();
-
-    if (!parentHabit) throw new NotFoundError('Habit not found or not an obligatory prayer');
-
-    // Already connected ids
-    const alreadyConnectedIds = (parentHabit.connectedHabits ?? []).map(
-        c => c.userHabit.toString(),
-    );
-
-    const filter: any = {
-        user: userId,
-        isActive: true,
-        habitType: { $nin: ['obligatory_prayer', 'sunnah_prayer'] },
-        _id: { $nin: [userHabitId, ...alreadyConnectedIds] },
-    };
-
-    if (searchTerm?.trim()) {
-        filter.name = { $regex: new RegExp(searchTerm.trim(), 'i') };
-    }
-
-    const habits = await UserHabit.find(filter)
-        .select('_id name category habitType')
-        .limit(20)
-        .lean();
-
-    return habits.map(h => ({
-        _id: h._id,
-        name: h.name,
-        category: h.category,
-        habitType: h.habitType,
-    }));
-};
-
-const deleteCustomHabit = async (user: IUser, habitId: string) => {
-
-    const habit = await UserHabit.findById(habitId);
-    if (!habit) {
-        throw new NotFoundError('Habit not found');
-    }
-    if (habit.isPreBuilt) {
-        throw new BadRequestError('Pre built habits cannot be deleted');
-    }
-    if (habit.user.toString() !== user._id.toString()) {
-        throw new BadRequestError('You can only delete your own habits');
-    }
-
-    const session = await mongoose.startSession();
-    try {
-        session.startTransaction();
-        // 1. Delete the habit
-        await UserHabit.deleteOne({ _id: habitId }, { session });
-        // 2. Delete associated habit logs
-        await HabitLog.deleteMany({ userHabit: habitId }, { session });
-        await session.commitTransaction();
-    } catch (error) {
-        await session.abortTransaction();
-        throw error;
-    } finally {
-        await session.endSession();
-    }
-
-};
-
-
-// completed habit 
-const completedHabit = async (user: IUser, habitId: string) => {
-
-    const userId = user._id;
-    const dateStr = buildDateBasedOnTimeZone(user.timezone as string);
-    // Database entry khujo ba update koro
-
-    const habit = await UserHabit.findById(habitId);
-    if (!habit) {
-        throw new NotFoundError('Habit not found');
-    }
-
-    let log = await HabitLog.findOne({
-        user: userId,
-        userHabit: habitId,
-        date: dateStr
-    });
-
-    if (!log) {
-        // Jodi dynamic generator background scheduler miss hoye thake, fresh temporary create koro
-        log = new HabitLog({
-            user: userId,
-            userHabit: habitId,
-            date: dateStr,
-        });
-    }
-
-    log.status = 'Completed';
-    log.completedAt = new Date();
-    log.skippedAt = null;
-    await log.save();
-
-    return log;
-}
-
-const skippedHabit = async (user: IUser, habitId: string) => {
-    
-    const userId = user._id;
-    const dateStr = buildDateBasedOnTimeZone(user.timezone as string);
-    // Database entry khujo ba update koro
-
-    const habit = await UserHabit.findById(habitId).select('_id');
-    if (!habit) {
-        throw new NotFoundError('Habit not found');
-    }
-
-    let log = await HabitLog.findOne({
-        user: userId,
-        userHabit: habitId,
-        date: dateStr
-    });
-
-    if (!log) {
-        
-        log = new HabitLog({
-            user: userId,
-            userHabit: habitId,
-            date: dateStr,
-        });
-    }
-
-    log.status = 'Skipped';
-    log.completedAt = new Date();
-    log.skippedAt = null;
-    await log.save();
-
-    return log;
-}
-
-export const userHabitService = {
-    toggleHabit,
-    getTodayHabits,
-    updateUserHabit,
-    addCustomHabit,
-    searchHabitsToConnect,
-    getHabitDetail,
-    deleteCustomHabit,
-    completedHabit,
-    skippedHabit
-};
-
+*/
 
 
 /*

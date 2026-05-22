@@ -18,9 +18,13 @@ export const userSchema = new Schema<IUser>(
       required: true,
       trim: true,
     },
+    phone: {
+      type: String,
+      default: null
+    },
     avatar: {
       type: String,
-      default: null 
+      default: null
     },
     password: {
       type: String,

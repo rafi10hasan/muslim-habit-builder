@@ -94,7 +94,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
     }
 
     const customHabits = await UserHabit.find(customHabitFilter)
-        .select('_id name category isActive infoContent')
+        .select('_id name category isActive customDetails infoContent')
         .lean();
 
     for (const h of customHabits) {
@@ -106,6 +106,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
             name: h.name,
             isUserActive: h.isActive,
             category: h.category,
+            customDetails: h.customDetails ?? null,
             infoContent: h.infoContent ?? null,
         });
     }
