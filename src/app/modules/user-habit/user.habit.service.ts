@@ -3,8 +3,7 @@ import mongoose, { Types } from 'mongoose';
 import { ConnectedPrayer, HabitCategory } from '../../../interfaces';
 import { BadRequestError, NotFoundError } from '../../errors/request/apiError';
 import { AdhkarSet } from '../adhkar-set/adhkar.set.model';
-import { LOG_STATUSES } from '../habit-logs/habit.log.constant';
-import { HabitLog } from '../habit-logs/habit.log.model';
+
 import { HABIT_TYPES } from '../habit-template/system.habit.constant';
 import { HabitTemplate } from '../habit-template/system.habit.model';
 import { QuranContent } from '../quran-content/quran.content.model';
@@ -14,6 +13,8 @@ import { IConnectedHabit, IFrequency } from './user.habit.interface';
 import { UserHabit } from './user.habit.model';
 import { buildDateBasedOnTimeZone } from './user.habit.utils';
 import { AddCustomHabitPayload, EditHabitPayload } from './user.habit.zod';
+import { HabitLog } from '../habit-log/habit.log.model';
+import { LOG_STATUS } from '../habit-log/habit.log.constant';
 
 
 // ─────────────────────────────────────────────────────────────
@@ -162,8 +163,8 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
             );
 
             await HabitLog.updateMany(
-                { userHabit: { $in: habitIds }, date: String(date), status: 'Pending' },
-                { $set: { status: 'Skipped', skippedAt: new Date() } },
+                { userHabit: { $in: habitIds }, date: String(date), status: LOG_STATUS.PENDING },
+                { $set: { status: LOG_STATUS.SKIPPED, skippedAt: new Date() } },
             );
 
             // সব child habit কে তাদের parent এর connectedHabits থেকে disconnect করো
@@ -211,8 +212,8 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
                 throw new BadRequestError('Habit is already deactivated');
             }
             await HabitLog.findOneAndUpdate(
-                { userHabit: customHabit._id, date: String(date), status: 'Pending' },
-                { $set: { status: 'Skipped', skippedAt: new Date() } },
+                { userHabit: customHabit._id, date: String(date), status: LOG_STATUS.PENDING },
+                { $set: { status: LOG_STATUS.SKIPPED, skippedAt: new Date() } },
             );
             customHabit.isActive = false;
             await customHabit.save()
@@ -1148,22 +1149,22 @@ const completedHabit = async (user: IUser, habitId: string) => {
             user: userId,
             userHabit: habitId,
             date: dateStr,
-            status: LOG_STATUSES.PENDING // Initial state setting
+            status: LOG_STATUS.PENDING // Initial state setting
         });
     }
 
     // ─────────────────────────────────────────────────────────
     //  TOGGLE CORE LOGIC ENGINE
     // ─────────────────────────────────────────────────────────
-    if (log.status === LOG_STATUSES.COMPLETED) {
+    if (log.status === LOG_STATUS.COMPLETED) {
         // If already Completed, toggle back to Pending state
-        log.status = LOG_STATUSES.PENDING;
+        log.status = LOG_STATUS.PENDING;
         log.completedAt = null;
         log.skippedAt = null;
         log.locationLogged = null; // Reset location data if required
     } else {
         // If Pending or Skipped, transition directly to Completed
-        log.status = LOG_STATUSES.COMPLETED;
+        log.status = LOG_STATUS.COMPLETED;
         log.completedAt = new Date();
         log.skippedAt = null; // Clear skip tracking if it was skipped before
     }
@@ -1196,21 +1197,21 @@ const skippedHabit = async (user: IUser, habitId: string) => {
             user: userId,
             userHabit: habitId,
             date: dateStr,
-            status: LOG_STATUSES.PENDING // Initial state setting
+            status: LOG_STATUS.PENDING // Initial state setting
         });
     }
 
     // ─────────────────────────────────────────────────────────
     //  TOGGLE CORE LOGIC ENGINE
     // ─────────────────────────────────────────────────────────
-    if (log.status === LOG_STATUSES.SKIPPED) {
+    if (log.status === LOG_STATUS.SKIPPED) {
         // If already Skipped, toggle back to Pending state
-        log.status = LOG_STATUSES.PENDING;
+        log.status = LOG_STATUS.PENDING;
         log.skippedAt = null;
         log.locationLogged = null; // Reset location data if required
     } else {
         // If Pending or Skipped, transition directly to Skipped
-        log.status = LOG_STATUSES.SKIPPED;
+        log.status = LOG_STATUS.SKIPPED;
         log.skippedAt = new Date();
     }
     await log.save();

@@ -1,8 +1,8 @@
 import moment from "moment-timezone";
-import { HabitLog } from "../habit-logs/habit.log.model";
 import { UserHabit } from "../user-habit/user.habit.model";
 import { buildDateBasedOnTimeZone } from "../user-habit/user.habit.utils";
 import { IUser } from "../user/user.interface";
+import { HabitLog } from "../habit-log/habit.log.model";
 
 
 
