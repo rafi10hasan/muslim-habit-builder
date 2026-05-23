@@ -65,13 +65,15 @@ app.use(applyRateLimit());
 // application middleware
 app.use('/api', routers);
 
+app.get('/', (_req: Request, res: Response): void => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // send html design with a button 'click to see server health' and integrate an api to check server health
-app.get('/', rootDesign);
+app.get('/root', rootDesign);
 
 app.get('/health_check', (_req: Request, res: Response) => {
-  res.status(StatusCodes.OK).json({
-    message: 'Welcome to the server. Server health is good.',
-  });
+ res.sendFile(path.join(__dirname, 'public', 'health.html'));
 });
 
 //
