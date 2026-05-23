@@ -339,7 +339,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
             }).select('userHabit status').lean();
 
             const existingLogMap = new Map(
-                existingLogs.map(l => [l.userHabit?.toString(), l]),
+                existingLogs.map((l: any) => [l.userHabit?.toString(), l]),
             );
 
             const logsToInsert: Types.ObjectId[] = [];
@@ -633,7 +633,7 @@ const getTodayHabits = async (user: IUser, category?: string) => {
     }).select('userHabit status').lean();
 
     const logMap = new Map(
-        existingLogs.map(l => [l.userHabit?.toString(), l.status]),
+        existingLogs.map((l: any) => [l.userHabit?.toString(), l.status]),
     );
 
     // Create logs for missing entries
@@ -1675,7 +1675,7 @@ const ToggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
             }).select('userHabit status').lean();
 
             const existingLogMap = new Map(
-                existingLogs.map(l => [l.userHabit?.toString(), l]),
+                existingLogs.map((l: any) => [l.userHabit?.toString(), l]),
             );
 
             const logsToInsert: Types.ObjectId[] = [];

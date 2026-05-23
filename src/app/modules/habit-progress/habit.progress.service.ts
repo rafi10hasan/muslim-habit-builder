@@ -79,7 +79,7 @@ const getCombinedProgressAndAnalytics = async (
 
         activeHabits.forEach((h: any) => {
             const cat = normalizeCategory(h.category);
-            const logFound = todayLogs.find(l => l.userHabit.toString() === h._id.toString());
+            const logFound = todayLogs.find((l: any) => l.userHabit.toString() === h._id.toString());
             const currentStatus = logFound ? logFound.status : 'Pending';
 
             if (categoryStats[cat as keyof typeof categoryStats]) {
@@ -115,7 +115,7 @@ const getCombinedProgressAndAnalytics = async (
             date: { $regex: `^${targetMonthPrefix}` }
         }).lean();
 
-        const dayGrouping = monthlyLogs.reduce((acc: any, log) => {
+        const dayGrouping = monthlyLogs.reduce((acc: any, log: any) => {
             const dateKey = log.date;
             if (!acc[dateKey]) acc[dateKey] = 0;
             if (log.status === 'Completed') acc[dateKey] += 1;
@@ -222,7 +222,7 @@ const getCombinedProgressAndAnalytics = async (
                 }
 
                 const monthlyCompletedLogs = await HabitLog.find({ user: userId, date: { $regex: `^${prefix}` }, status: 'Completed' }).lean();
-                const totalDaysCompletedInMonth = new Set(monthlyCompletedLogs.map(l => l.date)).size;
+                const totalDaysCompletedInMonth = new Set(monthlyCompletedLogs.map((l: any) => l.date)).size;
 
                 const totalDaysInMonth = new Date(parseInt(currentYearStr, 10), m, 0).getDate();
                 const mRatio = totalDaysInMonth > 0 ? Math.round((totalDaysCompletedInMonth / totalDaysInMonth) * 100) : 0;
@@ -266,7 +266,7 @@ const getCombinedProgressAndAnalytics = async (
                 }
 
                 const yearlyCompletedLogs = await HabitLog.find({ user: userId, date: { $regex: `^${queryYear}` }, status: 'Completed' }).lean();
-                const uniqueCompletedDays = new Set(yearlyCompletedLogs.map(l => l.date)).size;
+                const uniqueCompletedDays = new Set(yearlyCompletedLogs.map((l: any) => l.date)).size;
 
                 const totalDaysInYear = (queryYear % 4 === 0 && queryYear % 100 !== 0) || (queryYear % 400 === 0) ? 366 : 365;
                 const yRatio = Math.round((uniqueCompletedDays / totalDaysInYear) * 100);
@@ -369,7 +369,7 @@ const getIndividualHabitAnalytics = async (
             date: { $regex: `^${targetMonthPrefix}` }
         }).lean();
 
-        const logStatusLookupMap = new Map(monthlyHabitLogs.map(l => [l.date, l.status]));
+        const logStatusLookupMap = new Map(monthlyHabitLogs.map((l: any) => [l.date, l.status]));
 
         const daysInMonth = new Date(parseInt(year, 10), parseInt(month, 10), 0).getDate(); 
         const calendarHistoryGrid = [];
@@ -418,7 +418,7 @@ const getIndividualHabitAnalytics = async (
         };
 
         // Populate database execution log metrics map
-        const logsDateIndexedMap = new Map(absoluteActiveLifetimeLogs.map(l => [l.date, l.status]));
+        const logsDateIndexedMap = new Map(absoluteActiveLifetimeLogs.map((l: any) => [l.date, l.status]));
 
         let analysisDayIterator = moment(userRegisterDateStr, 'YYYY-MM-DD');
         const activeTodayMoment = moment(todayStr, 'YYYY-MM-DD');
