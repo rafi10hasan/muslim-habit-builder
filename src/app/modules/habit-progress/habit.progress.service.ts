@@ -369,7 +369,7 @@ const getIndividualHabitAnalytics = async (
             date: { $regex: `^${targetMonthPrefix}` }
         }).lean();
 
-        const logStatusLookupMap = new Map(monthlyHabitLogs.map((l: any) => [l.date, l.status]));
+        const logStatusLookupMap = new Map<string, any>(monthlyHabitLogs.map((l: any) => [l.date, l.status]));
 
         const daysInMonth = new Date(parseInt(year, 10), parseInt(month, 10), 0).getDate(); 
         const calendarHistoryGrid = [];
@@ -418,7 +418,7 @@ const getIndividualHabitAnalytics = async (
         };
 
         // Populate database execution log metrics map
-        const logsDateIndexedMap = new Map(absoluteActiveLifetimeLogs.map((l: any) => [l.date, l.status]));
+        const logsDateIndexedMap = new Map<string, any>(absoluteActiveLifetimeLogs.map((l: any) => [l.date, l.status]));
 
         let analysisDayIterator = moment(userRegisterDateStr, 'YYYY-MM-DD');
         const activeTodayMoment = moment(todayStr, 'YYYY-MM-DD');

@@ -338,7 +338,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
                 date: String(date),
             }).select('userHabit status').lean();
 
-            const existingLogMap = new Map(
+            const existingLogMap = new Map<string, any>(
                 existingLogs.map((l: any) => [l.userHabit?.toString(), l]),
             );
 
@@ -372,8 +372,8 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
                 _id: { $in: toReactivateWithTemplate.map(r => r.templateId) },
             }).select('_id parent').lean();
 
-            const reactivatedTemplateMap = new Map(
-                reactivatedTemplates.map(t => [t._id.toString(), t]),
+            const reactivatedTemplateMap = new Map<string, any>(
+                reactivatedTemplates.map((t: any) => [t._id.toString(), t]),
             );
 
             for (const { id, templateId } of toReactivateWithTemplate) {
@@ -632,7 +632,7 @@ const getTodayHabits = async (user: IUser, category?: string) => {
         date: dateStr,
     }).select('userHabit status').lean();
 
-    const logMap = new Map(
+    const logMap = new Map<string, any>(
         existingLogs.map((l: any) => [l.userHabit?.toString(), l.status]),
     );
 
