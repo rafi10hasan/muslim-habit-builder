@@ -8,6 +8,7 @@ import quranContentRouter from '../modules/quran-content/quran.content.route';
 import userHabitRouter from '../modules/user-habit/user.habit.route';
 import userRouter from '../modules/user/user.route';
 import habitProgressRouter from '../modules/habit-progress/habit.progress.route';
+import bugRouter from '../modules/bug/bug.route';
 
 
 const routersVersionOne = express.Router();
@@ -40,6 +41,11 @@ const appRouters = [
    {
     path: '/progress',
     router: habitProgressRouter,
+  },
+
+   {
+    path: '/bug',
+    router: bugRouter,
   },
 
   {

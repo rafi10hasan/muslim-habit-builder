@@ -1,14 +1,19 @@
 import { Types } from "mongoose";
+import { TBug, TBugStatus } from "./bug.constant";
 
-export interface IBug{
-    
-    _id:Types.ObjectId;
-    reporter: Types.ObjectId;
-    title: string;
-    description: string;
-    status: 'pending' | 'in_progress' | 'resolved';
-    bugImages: string[];
-    createdAt: Date;
-    updatedAt: Date;
-    
+export type TBugImage = {
+  bug_images: Express.Multer.File[];
+};
+
+export interface IBug extends Document {
+  originalReporter: Types.ObjectId;
+  featureKey: TBug;
+  title: string;
+  description: string;
+  status: TBugStatus;
+  upvoteCount: number;
+  upvotedBy: Types.ObjectId[];
+  bugImages?: string[];
+  createdAt: Date;
+  updatedAt: Date;
 }

@@ -9,12 +9,14 @@ const storage = multer.memoryStorage();
 // Per-field max size (bytes)
 export const MAX_FILE_SIZES: Record<string, number> = {
   profile_image: 1 * 1024 * 1024,
+  bug_images: 1 * 1024 * 1024,
   pages: 2 * 1024 * 1024,
   pdf: 5 * 1024 * 1024,
 };
 
 export const MAX_FILE_COUNTS: Record<string, number> = {
   profile_image: 1,
+  bug_images: 10,
   pages: 30,
   pdf: 1
 };
@@ -54,6 +56,7 @@ export const uploadFile = () =>
     fileFilter,
   }).fields([
     { name: 'profile_image', maxCount: 1 },
+    { name: 'bug_images', maxCount: 10 },
     { name: 'pages', maxCount: 60 },
     { name: 'pdf', maxCount: 1 },
   ]);

@@ -518,7 +518,6 @@ const getIndividualHabitAnalytics = async (
 };
 
 
-
 export const habitProgressService = {
     getCombinedProgressAndAnalytics,
     getIndividualHabitAnalytics
