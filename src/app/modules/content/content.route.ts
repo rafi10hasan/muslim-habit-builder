@@ -4,7 +4,7 @@ import { validateRequest } from '../../middlewares/request.validator';
 import { USER_ROLE } from '../user/user.constant';
 import { ContentController } from './content.controller';
 import { contentZodValidation } from './content.zod';
-import { ADMIN_ROLE } from '../admin/admin.constant';
+
 
 const router = Router();
 
