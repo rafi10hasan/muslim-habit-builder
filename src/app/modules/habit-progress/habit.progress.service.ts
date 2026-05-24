@@ -34,7 +34,7 @@ const getCombinedProgressAndAnalytics = async (
             if (lower === 'prayer') return 'Prayer';
             if (lower === 'quran' || lower === "qur'an") return 'Quran';
             if (lower === 'dhikr' || lower === 'adhkar') return 'Dhikr';
-            if (lower === 'deeds' || lower === 'connect') return 'Deeds';
+            if (lower === 'deeds' || lower === 'deeds') return 'Deeds';
             return catStr;
         };
 
@@ -105,7 +105,7 @@ const getCombinedProgressAndAnalytics = async (
                 Prayer: getRatio(categoryStats.Prayer.completed, categoryStats.Prayer.total), //
                 Quran: getRatio(categoryStats.Quran.completed, categoryStats.Quran.total),   //
                 Adhkar: getRatio(categoryStats.Dhikr.completed, categoryStats.Dhikr.total),   //
-                Connect: getRatio(categoryStats.Deeds.completed, categoryStats.Deeds.total)   //
+                Deeds: getRatio(categoryStats.Deeds.completed, categoryStats.Deeds.total)   //
             }
         };
 

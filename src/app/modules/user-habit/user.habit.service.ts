@@ -1025,6 +1025,7 @@ const addCustomHabit = async (user: IUser, payload: AddCustomHabitPayload) => {
         parent: null,
         group: null,
         isLocked: false,
+        isActive: true,
         infoContent: null,
         adhkarSet: null,
         quranContent: null,
