@@ -1,6 +1,5 @@
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
 import path from 'path';
 import config from './config';
 import { errorHandler, successHandler } from './config/morgan';
@@ -73,7 +72,7 @@ app.get('/', (_req: Request, res: Response): void => {
 app.get('/root', rootDesign);
 
 app.get('/health_check', (_req: Request, res: Response) => {
- res.sendFile(path.join(__dirname, 'public', 'health.html'));
+  res.sendFile(path.join(__dirname, 'public', 'health.html'));
 });
 
 //
@@ -84,10 +83,6 @@ app.get('/plan', (_req, res) => {
 // Example error logging
 app.get('/error', (req, _res, next) => {
   next(new BadRequestError('Testing error'));
-});
-
-app.get('/favicon.ico', (_req: Request, res: Response) => {
-  res.status(204).end(); // No Content
 });
 
 // Error handling middlewares
