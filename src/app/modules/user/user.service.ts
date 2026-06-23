@@ -18,20 +18,20 @@ const createAccount = async (payload: TRegistrationPayload) => {
 
   if (existingUser) {
     if (existingUser.deletedAt) {
+      const previousDeletedAt = existingUser.deletedAt;
+      const previousStatus = existingUser.status;
+
       existingUser.deletedAt = null;
       existingUser.status = USER_STATUS.ACTIVE;
       existingUser.password = payload.password;
       existingUser.verification.emailVerifiedAt = null;
-
-      // Save first so sendVerificationOtp can look up the user if needed
       await existingUser.save();
 
       try {
         await sendVerificationOtp(existingUser._id, payload.email);
       } catch {
-        // Roll back the restore on mail failure
-        existingUser.deletedAt = existingUser.deletedAt;
-        existingUser.status = USER_STATUS.ACTIVE; // or whatever the original status was
+        existingUser.deletedAt = previousDeletedAt;
+        existingUser.status = previousStatus;
         await existingUser.save();
         throw new BadRequestError('Failed to send verification email. Try again.');
       }
@@ -59,7 +59,6 @@ const createAccount = async (payload: TRegistrationPayload) => {
     throw new BadRequestError('An account with this email already exists.');
   }
 
-  // Save first so the OTP service can reference a real DB record
   const newUser = new User({
     ...payload,
     avatar: randomUserImage(),
@@ -72,6 +71,7 @@ const createAccount = async (payload: TRegistrationPayload) => {
   try {
     await sendVerificationOtp(newUser._id, payload.email);
   } catch {
+    await newUser.deleteOne();
     throw new BadRequestError('Failed to send verification email. Try again.');
   }
 
