@@ -378,13 +378,18 @@ const getIndividualHabitAnalytics = async (
             const currentFormattedDate = `${targetMonthPrefix}-${String(d).padStart(2, '0')}`;
             const dbLoggedStatus = logStatusLookupMap.get(currentFormattedDate);
 
-            let calculatedStatus = 'Missed'; // Default fallback status
+           let calculatedStatus = 'Missed';
 
-            if (currentFormattedDate > todayStr || currentFormattedDate < userRegisterDateStr) {
-                calculatedStatus = ''; // Future or pre-registration disabled zone mapping rules
-            } else if (dbLoggedStatus) {
-                calculatedStatus = dbLoggedStatus; // 'Completed' or 'Missed' directly mapped from DB
-            }
+              if (currentFormattedDate > todayStr || currentFormattedDate < userRegisterDateStr) {
+                calculatedStatus = '';
+             } else if (dbLoggedStatus === 'Completed' || dbLoggedStatus === 'Missed') {
+    // Both today and past: only accept valid statuses
+               calculatedStatus = dbLoggedStatus;
+             } else if (currentFormattedDate === todayStr) {
+                calculatedStatus = ''; // Today, no valid log yet
+             } else {
+              calculatedStatus = 'Missed'; // Past date, no valid log = Missed
+             }
 
             calendarHistoryGrid.push({
                 date: currentFormattedDate,
