@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 
 const createAuthSchema = z.object({
+
   fullName: z
     .string({
       error: (issue) => {
@@ -16,26 +17,24 @@ const createAuthSchema = z.object({
 
 
   email: z
-    .email({
-      error: (issue) => {
-        switch (true) {
-          case issue.input === undefined:
-            return 'Email address is required';
-          case issue.input === null:
-            return 'Email cannot be null';
-          case typeof issue.input !== 'string':
-            return 'Email must be text';
-          default:
-            return 'Please provide a valid email address';
-        }
-      },
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === undefined) {
+        ctx.addIssue({ code: 'custom', message: 'Email address is required' });
+        return;
+      }
+      if (typeof val !== 'string') {
+        ctx.addIssue({ code: 'custom', message: 'Email must be text' });
+        return;
+      }
     })
-    .pipe(z.string().min(5, 'Email must be at least 5 characters long'))
-    .pipe(z.string().max(254, 'Email cannot exceed 254 characters'))
+    .transform((val) => val.trim().toLowerCase())
     .pipe(
-      z.string().refine((email) => email.includes('@') && email.split('@')[1].includes('.'), 'Email must contain a domain with extension'),
-    )
-    .transform((email) => email.toLowerCase().trim()),
+      z.email('Please provide a valid email address')
+        .min(5, 'Email must be at least 5 characters long')
+        .max(254, 'Email cannot exceed 254 characters')
+    ),
+
   password: z
     .string({
       error: (issue) => {

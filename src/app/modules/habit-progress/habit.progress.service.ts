@@ -16,7 +16,7 @@ const getCombinedProgressAndAnalytics = async (
         const userId = user._id;
         const { category = 'all', analyticsView = 'week' } = query;
 
-        // 🚀 User Registration Date Tracking (Format: 'YYYY-MM-DD')
+        // User Registration Date Tracking (Format: 'YYYY-MM-DD')
         const userRegisterDateStr = moment(user.createdAt).format('YYYY-MM-DD');
 
         const currentDeviceTodayStr = buildDateBasedOnTimeZone(user.timezone as string);
@@ -41,7 +41,7 @@ const getCombinedProgressAndAnalytics = async (
         const targetCategoryNormalized = normalizeCategory(category);
 
         // ─────────────────────────────────────────────────────────
-        // 🎯 SCENARIO B: SPECIFIC CATEGORY TAB SELECTED
+        // SCENARIO B: SPECIFIC CATEGORY TAB SELECTED
         // ─────────────────────────────────────────────────────────
         if (targetCategoryNormalized !== 'all' && targetCategoryNormalized !== '') {
             const targetedCategoryHabits = await UserHabit.find({
@@ -59,12 +59,12 @@ const getCombinedProgressAndAnalytics = async (
         }
 
         // ─────────────────────────────────────────────────────────
-        // 🎯 SCENARIO A: 'ALL' TAB SELECTED
+        // SCENARIO A: 'ALL' TAB SELECTED
         // ─────────────────────────────────────────────────────────
         const activeHabits = await UserHabit.find({ user: userId, isActive: true }).lean();
         const totalUserActiveHabitsCount = activeHabits.length;
 
-        // 🚀 MODULE A: TODAY'S PROGRESS OVERVIEW
+        // MODULE A: TODAY'S PROGRESS OVERVIEW
         const todayLogs = await HabitLog.find({ user: userId, date: todayStr }).lean();
 
         let categoryStats = {
@@ -96,20 +96,20 @@ const getCombinedProgressAndAnalytics = async (
         const getRatio = (completed: number, total: number) => total > 0 ? Math.round((completed / total) * 100) : 0;
 
         const overviewCard = {
-            overallPercentage: getRatio(todayOverallCompleted, totalUserActiveHabitsCount), //
+            overallPercentage: getRatio(todayOverallCompleted, totalUserActiveHabitsCount), 
             counters: {
-                completed: todayOverallCompleted, //
-                missed: todayOverallMissed        //
+                completed: todayOverallCompleted, 
+                missed: todayOverallMissed        
             },
             categories: {
-                Prayer: getRatio(categoryStats.Prayer.completed, categoryStats.Prayer.total), //
-                Quran: getRatio(categoryStats.Quran.completed, categoryStats.Quran.total),   //
-                Adhkar: getRatio(categoryStats.Dhikr.completed, categoryStats.Dhikr.total),   //
-                Deeds: getRatio(categoryStats.Deeds.completed, categoryStats.Deeds.total)   //
+                Prayer: getRatio(categoryStats.Prayer.completed, categoryStats.Prayer.total), 
+                Quran: getRatio(categoryStats.Quran.completed, categoryStats.Quran.total),   
+                Adhkar: getRatio(categoryStats.Dhikr.completed, categoryStats.Dhikr.total),   
+                Deeds: getRatio(categoryStats.Deeds.completed, categoryStats.Deeds.total)   
             }
         };
 
-        // 🚀 MODULE B: MONTHLY CALENDAR GRID STATUS
+        // MODULE B: MONTHLY CALENDAR GRID STATUS
         const monthlyLogs = await HabitLog.find({
             user: userId,
             date: { $regex: `^${targetMonthPrefix}` }
@@ -132,23 +132,23 @@ const getCombinedProgressAndAnalytics = async (
             const ratio = totalUserActiveHabitsCount > 0 ? Math.round((completedCount / totalUserActiveHabitsCount) * 100) : 0;
             let statusLabel = 'Missed';
 
-            // 🚀 PROTECTION BLOCK: Future Date OR Registration er purborborti date hole straight Blank string!
+            // PROTECTION BLOCK: Future Date OR Registration er purborborti date hole straight Blank string!
             if (currentFormattedDate > todayStr || currentFormattedDate < userRegisterDateStr) {
-                statusLabel = ''; //
+                statusLabel = ''; 
             } else {
-                if (ratio >= 60) statusLabel = 'Good'; //
-                else if (ratio >= 20 && ratio < 60) statusLabel = 'Partial'; //
+                if (ratio >= 60) statusLabel = 'Good'; 
+                else if (ratio >= 20 && ratio < 60) statusLabel = 'Partial'; 
             }
 
             calendarGrid.push({
                 date: currentFormattedDate,
                 day: d,
-                completionRatio: (currentFormattedDate > todayStr || currentFormattedDate < userRegisterDateStr) ? 0 : ratio, //
-                status: statusLabel //
+                completionRatio: (currentFormattedDate > todayStr || currentFormattedDate < userRegisterDateStr) ? 0 : ratio, 
+                status: statusLabel 
             });
         }
 
-        // 🚀 MODULE C: LOWER SECTION ANALYTICS GRAPHS DATA
+        // MODULE C: LOWER SECTION ANALYTICS GRAPHS DATA
         let analyticsGraphData: any = {};
         const getLabelByRatio = (r: number) => {
             if (r >= 60) return 'Good';
@@ -156,7 +156,7 @@ const getCombinedProgressAndAnalytics = async (
             return 'Missed';
         };
 
-        // 📊 Sub-Case 1: Week Data Block
+        // Sub-Case 1: Week Data Block
         if (analyticsView === 'week') {
             const startOfWeek = referenceMoment.clone().startOf('week'); 
             const weeklyMetrics = [];
@@ -165,7 +165,7 @@ const getCombinedProgressAndAnalytics = async (
             for (let i = 0; i < 7; i++) {
                 const currentDay = startOfWeek.clone().add(i, 'days');
                 const dayStr = currentDay.format('YYYY-MM-DD');
-                const dayShortName = currentDay.format('ddd'); //
+                const dayShortName = currentDay.format('ddd'); 
 
                 // 🚀 FUTURE DATES & BEFORE REGISTRATION PROTECTION
                 if (dayStr > todayStr || dayStr < userRegisterDateStr) {
@@ -188,7 +188,7 @@ const getCombinedProgressAndAnalytics = async (
 
                 weeklyMetrics.push({
                     label: dayShortName, //
-                    habitsCompletedCount: completedCount, //
+                    habitsCompletedCount: completedCount, 
                     completionRatio: ratio,
                     status: getLabelByRatio(ratio)
                 });
@@ -196,7 +196,7 @@ const getCombinedProgressAndAnalytics = async (
             analyticsGraphData = { viewType: 'week', bestDisplayLabel: `Best Day: ${bestDay}`, metrics: weeklyMetrics }; //
         }
 
-        // 📊 Sub-Case 2: Month Data Block
+        // Sub-Case 2: Month Data Block
         if (analyticsView === 'month') {
             const currentYearStr = year; 
             const monthlyMetrics = [];
@@ -207,9 +207,9 @@ const getCombinedProgressAndAnalytics = async (
             for (let m = 1; m <= 12; m++) {
                 const prefix = `${currentYearStr}-${String(m).padStart(2, '0')}`;
                 const firstDayOfMonthStr = `${prefix}-01`;
-                const monthShortLabel = moment().month(m - 1).format('Jan'); //
+                const monthShortLabel = moment().month(m - 1).format('MMM'); 
 
-                // 🚀 FUTURE MONTHS & MONTHS BEFORE REGISTRATION PROTECTION
+                // FUTURE MONTHS & MONTHS BEFORE REGISTRATION PROTECTION
                 if ((firstDayOfMonthStr > currentMonthStartStr && currentYearStr === '2026') || 
                     (firstDayOfMonthStr < userRegisterMonthStartStr)) {
                     monthlyMetrics.push({
@@ -229,12 +229,12 @@ const getCombinedProgressAndAnalytics = async (
 
                 if (totalDaysCompletedInMonth > maxMonthlyDays) {
                     maxMonthlyDays = totalDaysCompletedInMonth;
-                    bestMonth = moment().month(m - 1).format('MMMM'); //
+                    bestMonth = moment().month(m - 1).format('MMMM'); 
                 }
 
                 monthlyMetrics.push({
-                    label: monthShortLabel, //
-                    daysCompletedCount: totalDaysCompletedInMonth, //
+                    label: monthShortLabel, 
+                    daysCompletedCount: totalDaysCompletedInMonth, 
                     completionRatio: mRatio,
                     status: getLabelByRatio(mRatio)
                 });
@@ -242,7 +242,7 @@ const getCombinedProgressAndAnalytics = async (
             analyticsGraphData = { viewType: 'month', bestDisplayLabel: `Best Month: ${bestMonth}`, metrics: monthlyMetrics }; //
         }
 
-        // 📊 Sub-Case 3: Year Data Block
+        // Sub-Case 3: Year Data Block
         if (analyticsView === 'year') {
             const activeYear = parseInt(year, 10);
             const yearlyMetrics = [];

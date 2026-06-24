@@ -1,20 +1,24 @@
 import z from 'zod';
 
 const loginAuthSchema = z.object({
-  email: z.email({
-    error: (issue) => {
-      switch (true) {
-        case issue.input === undefined:
-          return 'Email address is required';
-        case issue.input === null:
-          return 'Email cannot be null';
-        case typeof issue.input !== 'string':
-          return 'Email must be text';
-        default:
-          return 'Please provide a valid email address';
+  email: z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === undefined) {
+        ctx.addIssue({ code: 'custom', message: 'Email address is required' });
+        return;
       }
-    },
-  }),
+      if (typeof val !== 'string') {
+        ctx.addIssue({ code: 'custom', message: 'Email must be text' });
+        return;
+      }
+    })
+    .transform((val) => val.trim().toLowerCase())
+    .pipe(
+      z.email('Please provide a valid email address')
+        .min(5, 'Email must be at least 5 characters long')
+        .max(254, 'Email cannot exceed 254 characters')
+    ),
   password: z.string({
     error: (issue) => {
       if (issue.input === undefined) return 'Password is required';
@@ -43,20 +47,24 @@ const loginAuthSchema = z.object({
 });
 
 const verifyEmailByOtpSchema = z.object({
-  email: z.email({
-    error: (issue) => {
-      switch (true) {
-        case issue.input === undefined:
-          return 'Email address is required';
-        case issue.input === null:
-          return 'Email cannot be null';
-        case typeof issue.input !== 'string':
-          return 'Email must be text';
-        default:
-          return 'Please provide a valid email address';
+  email: z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === undefined) {
+        ctx.addIssue({ code: 'custom', message: 'Email address is required' });
+        return;
       }
-    },
-  }),
+      if (typeof val !== 'string') {
+        ctx.addIssue({ code: 'custom', message: 'Email must be text' });
+        return;
+      }
+    })
+    .transform((val) => val.trim().toLowerCase())
+    .pipe(
+      z.email('Please provide a valid email address')
+        .min(5, 'Email must be at least 5 characters long')
+        .max(254, 'Email cannot exceed 254 characters')
+    ),
   otp: z.string().regex(/^\d{6}$/, { message: 'OTP must be exactly 6 digits' }),
   fcmToken: z.string({
     error: (issue) => {
@@ -76,76 +84,89 @@ const verifyEmailByOtpSchema = z.object({
 
 // Schema for resending verification OTP
 const sendVerificationOtpAgainSchema = z.object({
-  email: z.email({
-    error: (issue) => {
-      switch (true) {
-        case issue.input === undefined:
-          return 'Email address is required';
-        case issue.input === null:
-          return 'Email cannot be null';
-        case typeof issue.input !== 'string':
-          return 'Email must be text';
-        default:
-          return 'Please provide a valid email address';
+  email: z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === undefined) {
+        ctx.addIssue({ code: 'custom', message: 'Email address is required' });
+        return;
       }
-    },
-  }),
+      if (typeof val !== 'string') {
+        ctx.addIssue({ code: 'custom', message: 'Email must be text' });
+        return;
+      }
+    })
+    .transform((val) => val.trim().toLowerCase())
+    .pipe(
+      z.email('Please provide a valid email address')
+        .min(5, 'Email must be at least 5 characters long')
+        .max(254, 'Email cannot exceed 254 characters')
+    ),
 });
 
 const forgotPasswordSchema = z.object({
-  email: z.email({
-    error: (issue) => {
-      switch (true) {
-        case issue.input === undefined:
-          return 'Email address is required';
-        case issue.input === null:
-          return 'Email cannot be null';
-        case typeof issue.input !== 'string':
-          return 'Email must be text';
-        default:
-          return 'Please provide a valid email address';
+  email: z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === undefined) {
+        ctx.addIssue({ code: 'custom', message: 'Email address is required' });
+        return;
       }
-    },
-    pattern: z.regexes.email,
-  }),
+      if (typeof val !== 'string') {
+        ctx.addIssue({ code: 'custom', message: 'Email must be text' });
+        return;
+      }
+    })
+    .transform((val) => val.trim().toLowerCase())
+    .pipe(
+      z.email('Please provide a valid email address')
+        .min(5, 'Email must be at least 5 characters long')
+        .max(254, 'Email cannot exceed 254 characters')
+    ),
 });
 
 
 const resetPasswordOtpAgainSchema = z.object({
-  email: z.email({
-    error: (issue) => {
-      switch (true) {
-        case issue.input === undefined:
-          return 'Email address is required';
-        case issue.input === null:
-          return 'Email cannot be null';
-        case typeof issue.input !== 'string':
-          return 'Email must be text';
-        default:
-          return 'Please provide a valid email address';
+  email: z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === undefined) {
+        ctx.addIssue({ code: 'custom', message: 'Email address is required' });
+        return;
       }
-    },
-    pattern: z.regexes.email,
-  }),
+      if (typeof val !== 'string') {
+        ctx.addIssue({ code: 'custom', message: 'Email must be text' });
+        return;
+      }
+    })
+    .transform((val) => val.trim().toLowerCase())
+    .pipe(
+      z.email('Please provide a valid email address')
+        .min(5, 'Email must be at least 5 characters long')
+        .max(254, 'Email cannot exceed 254 characters')
+    ),
 });
 
 
 const verifyForgotPasswordSchema = z.object({
-  email: z.email({
-    error: (issue) => {
-      switch (true) {
-        case issue.input === undefined:
-          return 'Email address is required';
-        case issue.input === null:
-          return 'Email cannot be null';
-        case typeof issue.input !== 'string':
-          return 'Email must be text';
-        default:
-          return 'Please provide a valid email address';
+  email: z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === undefined) {
+        ctx.addIssue({ code: 'custom', message: 'Email address is required' });
+        return;
       }
-    },
-    pattern: z.regexes.email,
-  }),
+      if (typeof val !== 'string') {
+        ctx.addIssue({ code: 'custom', message: 'Email must be text' });
+        return;
+      }
+    })
+    .transform((val) => val.trim().toLowerCase())
+    .pipe(
+      z.email('Please provide a valid email address')
+        .min(5, 'Email must be at least 5 characters long')
+        .max(254, 'Email cannot exceed 254 characters')
+    ),
   otp: z.string().regex(/^\d{6}$/, { message: 'OTP must be exactly 6 digits' }),
 });
 

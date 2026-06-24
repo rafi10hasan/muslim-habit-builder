@@ -435,6 +435,76 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
             }
         }
 
+        if (template.connectedHabits?.length) {
+            console.log("access template connected habit");
+            console.log({ newHabits })
+            for (let i = 0; i < newHabits.length; i++) {
+
+                const childUserHabit = newHabits[i];        // e.g. Fajr UserHabit
+
+                const connectedHabitIds: { userHabit: Types.ObjectId; order: number }[] = [];
+
+                for (const ch of template.connectedHabits) {
+                    // templateId দিয়ে connected template fetch
+                    const connectedTemplate = await HabitTemplate.findById(ch.templateHabit).lean();
+                    console.log({ connectedTemplate })
+                    if (!connectedTemplate || !connectedTemplate.isActive) continue;
+
+
+                    // AdhkarAfterPrayer(Fajr) ≠ AdhkarAfterPrayer(Dhuhr)
+                    let connectedUserHabit = await UserHabit.findOne({
+                        user: userId,
+                        template: ch.templateHabit,
+                        isActive: true,
+                    }).lean();
+
+                    console.log({ connectedUserHabit })
+                    if (!connectedUserHabit) {
+                        // isPrayerLocked check
+                        if (connectedTemplate.isPrayerLocked) {
+                            const prayerActive = await UserHabit.exists({
+                                user: userId,
+                                isActive: true,
+                            });
+                            if (!prayerActive) continue;
+                        }
+
+                        // Step A: আগে connected habit তৈরি করো
+                        connectedUserHabit = await UserHabit.create(
+                            buildHabitPayload(userId, connectedTemplate) as any,
+                        );
+
+                        console.log({ connectedUserHabit })
+                        await HabitLog.create({
+                            user: userId,
+                            userHabit: connectedUserHabit._id,
+                            date: String(date),
+                            status: 'Pending',
+                        });
+                    }
+
+                    const currentFreshHabit = await UserHabit.findById(childUserHabit._id).lean();
+                    const currentConnected = currentFreshHabit?.connectedHabits || [];
+                    const lastOrder = currentConnected[currentConnected.length - 1]?.order ?? 0;
+
+                    // Step B: তারপর child এর connectedHabits array তে add
+                    connectedHabitIds.push({
+                        userHabit: connectedUserHabit._id,
+                        order: lastOrder ? lastOrder + 1 : 1,
+                    });
+                }
+
+                console.log({ childUserHabit, connectedHabitIds });
+
+                // DB তে save — child UserHabit এর connectedHabits update
+                if (connectedHabitIds.length) {
+                    await UserHabit.findByIdAndUpdate(childUserHabit._id, {
+                        $push: { connectedHabits: { $each: connectedHabitIds } },
+                    });
+                }
+            }
+        }
+
         return {
             added: newHabits.map(h => ({ _id: h._id, name: h.name })),
             reactivated: toReactivate.map(id => ({ _id: id })),
