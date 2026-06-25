@@ -33,8 +33,10 @@ const buildHabitPayload = (userId: Types.ObjectId, template: any) => ({
     // Prayer
     connectedPrayer: template.connectedPrayer ?? null,
 
+    allowConnectedPrayers: template.allowConnectedPrayers ?? [],
     // Location
     supportsLocation: template.supportsLocation ?? false,
+
     location: template.supportsLocation ? 'Masjid' : 'Home',
 
     // Lock
@@ -56,9 +58,9 @@ const buildHabitPayload = (userId: Types.ObjectId, template: any) => ({
     allowedFrequencies: template.allowedFrequencies ?? [],
     // Frequency
     frequency: {
-        type: template.defaultFrequency,
-        selectedDays: [],
-        everyNDays: undefined,
+        type: template.defaultFrequency.type ?? FREQUENCY_TYPES.DAILY,
+        selectedDays: template.defaultFrequency.selectedDays ?? [],
+        everyNDays: template.defaultFrequency.everyNDays ?? undefined,
     },
 
     // Defaults
@@ -414,6 +416,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
 
         let newHabits: any[] = [];
         if (canAdd.length) {
+            console.log({canAdd})
             const payloads = canAdd.map(t => buildHabitPayload(userId, t));
             newHabits = await UserHabit.insertMany(payloads);
 
@@ -436,8 +439,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
         }
 
         if (template.connectedHabits?.length) {
-            console.log("access template connected habit");
-            console.log({ newHabits })
+    
             for (let i = 0; i < newHabits.length; i++) {
 
                 const childUserHabit = newHabits[i];        // e.g. Fajr UserHabit
@@ -878,58 +880,7 @@ const updateUserHabit = async (user: IUser, userHabitId: string, payload: EditHa
     if (payload.customDetails !== undefined || habit.customDetails !== "") {
         habit.customDetails = payload.customDetails;
     }
-    // Connected habits — only for obligatory_prayer
-    // if (payload.connectedHabits !== undefined) {
-    //     if (habit.habitType !== 'obligatory_prayer') {
-    //         throw new BadRequestError('Only obligatory prayers can have connected habits');
-    //     }
-
-    //     if (payload.connectedHabits.length) {
-    //         // Validate সব ids এই user এর active habits
-    //         const validHabits = await UserHabit.find({
-    //             _id: { $in: payload.connectedHabits },
-    //             user: userId,
-    //             isActive: true,
-    //         }).select('_id').lean();
-
-    //         if (validHabits.length !== payload.connectedHabits.length) {
-    //             throw new BadRequestError(
-    //                 'One or more connected habits are invalid or inactive',
-    //             );
-    //         }
-    //     }
-
-    //     // Remove হওয়া habits এর parent null করো
-    //     const oldIds = (habit.connectedHabits ?? []).map(c => c.userHabit.toString());
-    //     const newIds = payload.connectedHabits.map(c => c.userHabit.toString());
-    //     const removedIds = oldIds.filter(id => !newIds.includes(id));
-
-    //     if (removedIds.length) {
-    //         await UserHabit.updateMany(
-    //             { _id: { $in: removedIds }, user: userId },
-    //             { $set: { parent: null } },
-    //         );
-    //         // Parent এর connectedHabits থেকেও disconnect
-    //         await Promise.all(removedIds.map(id =>
-    //             disconnectFromParents(new Types.ObjectId(id))
-    //         ));
-    //     }
-
-    //     // নতুন ids এর parent set করো
-    //     const addedIds = newIds.filter(id => !oldIds.includes(id));
-    //     if (addedIds.length) {
-    //         await UserHabit.updateMany(
-    //             { _id: { $in: addedIds }, user: userId },
-    //             { $set: { parent: habit.template } },
-    //         );
-    //     }
-
-    //     // Array index থেকে order set করো
-    //     habit.connectedHabits = payload.connectedHabits.map((item, index) => ({
-    //         userHabit: new Types.ObjectId(item.userHabit),
-    //         order: item.order ?? index + 1,
-    //     }));
-    // }
+    
 
     if (payload.connectedHabits !== undefined) {
         if (habit.habitType !== 'obligatory_prayer') {
@@ -1125,14 +1076,16 @@ const searchHabitsToConnect = async (
     searchTerm?: string,
 ) => {
     const userId = user._id as Types.ObjectId;
-
+    
     // Parent habit validate করো
     const parentHabit = await UserHabit.findOne({
         _id: userHabitId,
         user: userId,
         isActive: true,
         habitType: HABIT_TYPES.OBLIGATORY_PRAYER,
-    }).select('_id connectedHabits').lean();
+    }).select('_id connectedHabits allowConnectedPrayers connectedPrayer').lean();
+   
+    console.log({ parentHabit })
 
     if (!parentHabit) throw new NotFoundError('Habit not found or not an obligatory prayer');
 
@@ -1145,6 +1098,7 @@ const searchHabitsToConnect = async (
         user: userId,
         isActive: true,
         habitType: { $nin: [HABIT_TYPES.OBLIGATORY_PRAYER, HABIT_TYPES.SUNNAH_PRAYER] },
+        allowConnectedPrayers: { $in: [parentHabit.connectedPrayer] },
         _id: { $nin: [userHabitId, ...alreadyConnectedIds] },
     };
 

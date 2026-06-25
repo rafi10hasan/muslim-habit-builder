@@ -2,11 +2,11 @@ import { Server as HTTPServer } from 'http';
 import mongoose from 'mongoose';
 import app from './app';
 import config from './config';
-
+import dns from 'dns';
 import seedingAdmin from './utilities/seeding';
 
 let server: HTTPServer;
-
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 // handle uncaught exception error
 process.on('uncaughtException', (error) => {
   console.log('uncaughtException error', error);

@@ -1,11 +1,18 @@
 import { Types } from 'mongoose';
 import { Frequency, HabitType } from './system.habit.constant';
 import { ConnectedPrayer, HabitCategory, HabitLevel } from '../../../interfaces';
+import { FrequencyType, WeekDay } from '../user-habit/user.habit.constant';
 
 
 export interface IConnectedHabit {
   templateHabit: Types.ObjectId;
   order: number;
+}
+
+export interface IDefaultFrequency {
+  type: FrequencyType;
+  selectedDays?: WeekDay[];
+  everyNDays?: number;
 }
 
 export interface IHabitTemplate {
@@ -18,6 +25,8 @@ export interface IHabitTemplate {
   // Prayer connection (img 3, 4, 15)
   connectedPrayer?: ConnectedPrayer;
   
+  allowConnectedPrayers: ConnectedPrayer[];
+
   isPrayerLocked: Boolean;
   // Habit type
   habitType: HabitType;
@@ -29,7 +38,7 @@ export interface IHabitTemplate {
   group?: Types.ObjectId | null;
 
   // Frequency defaults (img 15)
-  defaultFrequency: Frequency;
+  defaultFrequency: IDefaultFrequency;
 
   allowedFrequencies: Frequency[];
   
@@ -56,6 +65,8 @@ export interface IHabitTemplate {
 
   updatedAt: Date;
 }
+
+
 
 /*
 import { Types } from 'mongoose';

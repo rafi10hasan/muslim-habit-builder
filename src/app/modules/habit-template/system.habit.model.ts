@@ -1,9 +1,25 @@
 import { Schema, model } from 'mongoose';
 import { CONNECTED_PRAYERS, HABIT_CATEGORIES, HABIT_LEVELS } from '../../../interfaces';
+import { FREQUENCY_TYPES, WEEK_DAYS } from '../user-habit/user.habit.constant';
 import { FREQUENCIES, HABIT_TYPES } from './system.habit.constant';
-import { IHabitTemplate } from './system.habit.interface';
+import { IDefaultFrequency, IHabitTemplate } from './system.habit.interface';
 
-
+const frequencySchema = new Schema<IDefaultFrequency>({
+  type: {
+    type: String,
+    enum: Object.values(FREQUENCY_TYPES),
+    required: true,
+  },
+  selectedDays: {
+    type: [String],
+    enum: Object.values(WEEK_DAYS),
+    default: undefined,
+  },
+  everyNDays: {
+    type: Number,
+    default: undefined,
+  },
+});
 
 
 // Main Schema
@@ -25,6 +41,12 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
       type: String,
       enum: Object.values(CONNECTED_PRAYERS),
       default: null
+    },
+
+    allowConnectedPrayers: {
+      type: [String],
+      enum: Object.values(CONNECTED_PRAYERS),
+      default: []
     },
 
     isPrayerLocked: {
@@ -55,10 +77,8 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
     },
 
     defaultFrequency: {
-      type: String,
-      enum: Object.values(FREQUENCIES),
+      type: frequencySchema,
       required: true,
-      default: FREQUENCIES.DAILY
     },
 
     allowedFrequencies: {

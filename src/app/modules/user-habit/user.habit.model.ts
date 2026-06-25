@@ -77,6 +77,12 @@ const userHabitSchema = new Schema<IUserHabit>(
       default: null,
     },
 
+    allowConnectedPrayers: {
+      type: [String],
+      enum: Object.values(CONNECTED_PRAYERS),
+      default: []
+    },
+
     isPrayerLocked: {
       type: Boolean,
       default: true

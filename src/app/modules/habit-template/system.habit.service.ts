@@ -5,7 +5,7 @@ import { IUser } from '../user/user.interface';
 import { SYSTEM_HABIT_MESSAGES } from './system.habit.constant';
 import { HabitTemplate } from './system.habit.model';
 import { TCreateHabitTemplate } from './system.habit.zod';
-import { IHabitTemplate } from './system.habit.interface';
+
 
 const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
     const userId = user._id as Types.ObjectId;
@@ -15,10 +15,30 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         templateFilter.category = { $regex: new RegExp(`^${category}$`, 'i') };
     }
 
-    // ── Template based habits ──
+
+    const templatesWithConnections = await HabitTemplate.find(
+        { isActive: true, 'connectedHabits.0': { $exists: true } },
+        { connectedHabits: 1 },
+    ).lean();
+
+    console.log({ templatesWithConnections })
+    const connectedTemplateIds = new Set(
+        templatesWithConnections
+            .flatMap((t: any) =>
+                (t.connectedHabits ?? []).map((ch: any) =>
+                    ch.templateHabit?.toString()  // ✅ templateId → templateHabit
+                )
+            )
+            .filter(Boolean),
+    );
+    console.log({ connectedTemplateIds })
     const topLevelTemplates = await HabitTemplate.find({
         ...templateFilter,
         $or: [{ group: null }, { group: { $exists: false } }],
+        // Connected habit হিসেবে referenced templates বাদ
+        ...(connectedTemplateIds.size > 0 && {
+            _id: { $nin: Array.from(connectedTemplateIds) },
+        }),
     }).lean();
 
     const topLevelIds = topLevelTemplates.map(t => t._id);
@@ -35,9 +55,9 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         groupChildrenMap.get(groupId)!.push(child._id);
     }
 
-    const userHabits = await UserHabit.find({
-        user: userId,
-    }).select('template isActive _id name category habitType').lean();
+    const userHabits = await UserHabit.find({ user: userId })
+        .select('template isActive _id name category habitType')
+        .lean();
 
     const userHabitMap = new Map(
         userHabits.map(h => [h.template?.toString(), h]),
@@ -83,12 +103,9 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         });
     }
 
-    // ── Custom habits — template: null ──
-    const customHabitFilter: any = {
-        user: userId,
-        template: null,
-    };
+    // ── Custom habits — template: null ────────────────────────
 
+    const customHabitFilter: any = { user: userId, template: null };
     if (category && category.toLowerCase() !== 'all') {
         customHabitFilter.category = { $regex: new RegExp(`^${category}$`, 'i') };
     }
@@ -120,7 +137,6 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         custom: buckets.custom,
     };
 };
-
 
 // create system habit
 const createHabitTemplateIntoDB = async (payload: TCreateHabitTemplate) => {

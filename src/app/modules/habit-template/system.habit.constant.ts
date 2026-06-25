@@ -30,7 +30,7 @@ export const FREQUENCIES = {
   DAILY: "Daily",
   WEEKLY: "Weekly",
   EVERY_N_DAYS: "Every_N_Days",
-
+  FRIDAY: "Friday",
 } as const;
 export type Frequency = (typeof FREQUENCIES)[keyof typeof FREQUENCIES];
 

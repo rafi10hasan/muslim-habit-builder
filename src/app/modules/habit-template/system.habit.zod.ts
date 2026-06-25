@@ -8,31 +8,38 @@ import { FREQUENCY_TYPES } from '../user-habit/user.habit.constant';
 import { HABIT_TYPES } from './system.habit.constant';
 
 export const frequencyZodSchema = z.object({
-  type: z.enum(Object.values(FREQUENCY_TYPES) as [string, ...string[]], {
-    error: () => "Frequency type is required",
-  }),
-  days: z.array(z.enum(Object.values(WEEK_DAYS) as [string, ...string[]])).default([]),
-  everyNDays: z.number().min(1).nullable().optional().default(null),
-})
+    type: z.enum(Object.values(FREQUENCY_TYPES) as [string, ...string[]], {
+      error: (issue) => {
+        if (issue.input === undefined) return 'Default frequency type is required'
+        return `Invalid default frequency type. Must be one of: ${Object.values(FREQUENCY_TYPES).join(', ')}`
+      },
+    }),
+    selectedDays: z.array(z.enum(Object.values(WEEK_DAYS) as [string, ...string[]])).default([]),
+    everyNDays: z.number().optional(),
+  }).default({
+    type: FREQUENCY_TYPES.DAILY,
+    selectedDays: [],
+    everyNDays: undefined,
+  })
   .superRefine((data, ctx) => {
 
     if (data.type === FREQUENCY_TYPE.DAILY) {
-      if (data.days && data.days.length > 0) {
+      if (data.selectedDays && data.selectedDays.length > 0) {
         ctx.addIssue({
           code: "custom",
-          message: "Days must be empty when frequency is daily",
-          path: ["days"],
+          message: "Selected days must be empty when frequency is daily",
+          path: ["selectedDays"],
         });
       }
     }
 
 
     if (data.type === FREQUENCY_TYPE.WEEKLY) {
-      if (!data.days || data.days.length === 0) {
+      if (!data.selectedDays || data.selectedDays.length === 0) {
         ctx.addIssue({
           code: "custom",
           message: "Please select at least one day for weekly frequency",
-          path: ["days"],
+          path: ["selectedDays"],
         });
       }
     }
@@ -47,11 +54,11 @@ export const frequencyZodSchema = z.object({
         });
       }
 
-      if (data.days && data.days.length > 0) {
+      if (data.selectedDays && data.selectedDays.length > 0) {
         ctx.addIssue({
           code: "custom",
-          message: "Days should be empty for 'every n days' type",
-          path: ["days"],
+          message: "Selected days should be empty for 'every n days' type",
+          path: ["selectedDays"],
         });
       }
     }
@@ -83,6 +90,7 @@ const createHabitTemplateZod = z.object({
     },
   }).optional(),
 
+  allowConnectedPrayers: z.array(z.enum(Object.values(CONNECTED_PRAYERS) as [string, ...string[]])).optional().default([]),
 
   supportLocation: z.preprocess(
     (val) => {
@@ -112,12 +120,7 @@ const createHabitTemplateZod = z.object({
     .nullable()
     .optional(),
 
-  defaultFrequency: z.enum(Object.values(FREQUENCY_TYPES) as [string, ...string[]], {
-    error: (issue) => {
-      if (issue.input === undefined) return 'Default frequency is required'
-      return `Invalid default frequency. Must be one of: ${Object.values(FREQUENCY_TYPE).join(', ')}`
-    },
-  }),
+  defaultFrequency: frequencyZodSchema,
 
   allowedFrequencies: z.array(z.enum(Object.values(FREQUENCY_TYPES) as [string, ...string[]], {
     error: (issue) => {

@@ -26,6 +26,7 @@ export interface IUserHabit {
   name: string;
   category: HabitCategory;
   connectedPrayer?: ConnectedPrayer;
+  allowConnectedPrayers: ConnectedPrayer[];
   isPrayerLocked: boolean;
   location?: HabitLocation;
   frequency: IFrequency;
