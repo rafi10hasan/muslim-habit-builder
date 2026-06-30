@@ -880,7 +880,7 @@ const updateUserHabit = async (user: IUser, userHabitId: string, payload: EditHa
     }
     
 
-    if (payload.connectedHabits !== undefined) {
+    if ( payload.connectedHabits && payload.connectedHabits.length > 0) {
         if (habit.habitType !== 'obligatory_prayer') {
             throw new BadRequestError('Only obligatory prayers can have connected habits');
         }
