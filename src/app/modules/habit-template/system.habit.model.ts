@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { CONNECTED_PRAYERS, HABIT_CATEGORIES, HABIT_LEVELS } from '../../../interfaces';
-import { FREQUENCY_TYPES, WEEK_DAYS } from '../user-habit/user.habit.constant';
+import { FREQUENCY_TYPES, HABIT_LOCATIONS, WEEK_DAYS } from '../user-habit/user.habit.constant';
 import { FREQUENCIES, HABIT_TYPES } from './system.habit.constant';
 import { IDefaultFrequency, IHabitTemplate } from './system.habit.interface';
 
@@ -61,8 +61,9 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
     },
 
     supportsLocation: {
-      type: Boolean,
-      default: false
+      type: String,
+      enum: Object.values(HABIT_LOCATIONS),
+      default: null,
     },
 
     parent: {

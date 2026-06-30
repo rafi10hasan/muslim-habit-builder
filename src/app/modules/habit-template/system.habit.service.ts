@@ -26,7 +26,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
         templatesWithConnections
             .flatMap((t: any) =>
                 (t.connectedHabits ?? []).map((ch: any) =>
-                    ch.templateHabit?.toString()  // ✅ templateId → templateHabit
+                    ch.templateHabit?.toString()  // 
                 )
             )
             .filter(Boolean),

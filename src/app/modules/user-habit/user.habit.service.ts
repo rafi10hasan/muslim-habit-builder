@@ -35,9 +35,8 @@ const buildHabitPayload = (userId: Types.ObjectId, template: any) => ({
 
     allowConnectedPrayers: template.allowConnectedPrayers ?? [],
     // Location
-    supportsLocation: template.supportsLocation ?? false,
 
-    location: template.supportsLocation ? 'Masjid' : 'Home',
+    location: template.supportsLocation ?? null,
 
     // Lock
     isLocked: template.isLocked ?? false,
@@ -858,9 +857,8 @@ const updateUserHabit = async (user: IUser, userHabitId: string, payload: EditHa
     }
 
     // Reminder
-    if (payload.reminder !== undefined) {
-        habit.reminder = payload.reminder as any;
-    }
+    if (payload.reminder !== undefined) habit.reminder = payload.reminder as any;
+    
 
     // StartDate
     if (payload.startDate !== undefined) {
@@ -1006,7 +1004,6 @@ const getHabitDetail = async (user: IUser, userHabitId: string) => {
     };
 };
 
-
 // ─────────────────────────────────────────────────────────────
 //  3. ADD CUSTOM HABIT
 // ─────────────────────────────────────────────────────────────
@@ -1149,7 +1146,6 @@ const deleteCustomHabit = async (user: IUser, habitId: string) => {
 
 };
 
-
 // completed habit 
 const completedHabit = async (user: IUser, habitId: string) => {
 
@@ -1197,7 +1193,6 @@ const completedHabit = async (user: IUser, habitId: string) => {
     return log;
 }
 
-
 // skipped habit
 const skippedHabit = async (user: IUser, habitId: string) => {
 
@@ -1244,7 +1239,6 @@ const skippedHabit = async (user: IUser, habitId: string) => {
 }
 
 // get content
-
 const getDynamicHabitContent = async (user: IUser, contentId: string) => {
 
     const quranData = await QuranContent.findById(contentId).lean();
@@ -1277,7 +1271,6 @@ export const userHabitService = {
     skippedHabit,
     getDynamicHabitContent,
 };
-
 
 
 

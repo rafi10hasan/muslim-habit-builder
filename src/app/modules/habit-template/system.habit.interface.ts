@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import { Frequency, HabitType } from './system.habit.constant';
 import { ConnectedPrayer, HabitCategory, HabitLevel } from '../../../interfaces';
-import { FrequencyType, WeekDay } from '../user-habit/user.habit.constant';
+import { FrequencyType, HabitLocation, WeekDay } from '../user-habit/user.habit.constant';
 
 
 export interface IConnectedHabit {
@@ -33,7 +33,7 @@ export interface IHabitTemplate {
   
   parent: Types.ObjectId | null;
   // Location option (img 15: Home/Masjid)
-  supportsLocation: boolean;     // true just for obligatory prayers
+  supportsLocation: HabitLocation;     // true just for obligatory prayers
   
   group?: Types.ObjectId | null;
 
