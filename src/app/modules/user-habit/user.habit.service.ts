@@ -1033,7 +1033,6 @@ const addCustomHabit = async (user: IUser, payload: AddCustomHabitPayload) => {
         isPrayerLocked: false,
         isPreBuilt: false,
         connectedPrayer: payload.connectedPrayer ?? null,
-        location: payload.location ?? 'Home',
         frequency: payload.frequency,
         allowedFrequencies: [FREQUENCY_TYPES.DAILY, FREQUENCY_TYPES.WEEKLY, FREQUENCY_TYPES.EVERY_N_DAYS],
         reminder: payload.reminder ?? { enabled: false, time: '12:00 AM' },
