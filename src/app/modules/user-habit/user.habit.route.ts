@@ -27,7 +27,7 @@ userHabitRouter.get(
 
 userHabitRouter.post(
     '/custom/add',
-    authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),
+    authMiddleware(USER_ROLE.USER),
     validateRequest({
         body: userHabitValidationZodSchema.addCustomHabitSchema,
     }),
