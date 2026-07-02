@@ -40,7 +40,8 @@ const buildHabitPayload = (userId: Types.ObjectId, template: any) => ({
 
     // Lock
     isLocked: template.isLocked ?? false,
-
+    
+    isPrayerLocked: template.isPrayerLocked ?? true,
     // Info
     hasInfoContent: Array.isArray(template.infoContent)
         ? template.infoContent.length > 0

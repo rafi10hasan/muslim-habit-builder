@@ -85,7 +85,6 @@ const userHabitSchema = new Schema<IUserHabit>(
 
     isPrayerLocked: {
       type: Boolean,
-      default: true
     },
     location: {
       type: String,
