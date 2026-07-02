@@ -31,6 +31,15 @@ userRouter.patch(
   userController.updateUserProfile,
 );
 
+userRouter.post(
+  '/switch-guest-to-real',
+  authMiddleware(USER_ROLE.GUEST),
+  validateRequest({
+    body: userValidationZodSchema.createAuthSchema,
+  }),
+  userController.switchGuestAccountToRealAccountIntoDb,
+);
+
 userRouter.patch(
   '/update-profile-image',
   authMiddleware(USER_ROLE.USER, USER_ROLE.GUEST),

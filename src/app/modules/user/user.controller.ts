@@ -35,6 +35,17 @@ const createGuestAccountIntoDb = asyncHandler(async (req: Request, res: Response
 });
 
 
+const switchGuestAccountToRealAccountIntoDb = asyncHandler(async (req: Request, res: Response) => {
+  const result = await userService.switchGuestAccountToRealAccount(req.user, req.body);
+  // console.log(result);
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: 'Check your email to verify your account',
+    data: result,
+  });
+});
+
 const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
   const result = await userService.updateUserProfile(req.user,req.body);
   // console.log(result);
@@ -72,6 +83,7 @@ export const userController = {
   createGuestAccountIntoDb,
   updateUserProfile,
   updateUserProfileImage,
+  switchGuestAccountToRealAccountIntoDb,
   getUserProfile
 };
 

@@ -101,7 +101,11 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
       type: Boolean,
       default: false
     },
-
+    
+    isGuestLocked: {
+      type: Boolean,
+      default: true
+    },
     connectedHabits: {
       type: [{
         templateHabit: { type: Schema.Types.ObjectId, ref: 'HabitTemplate', required: false },

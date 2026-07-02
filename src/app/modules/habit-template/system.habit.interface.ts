@@ -51,6 +51,9 @@ export interface IHabitTemplate {
   
   isLocked: boolean;
   // Book icon habits (img 16: "book sign will appear next to specific habits")
+
+  isGuestLocked: boolean;
+  
   infoContent: string | null
    
   // linked adhkar set for adhkar habit

@@ -109,6 +109,36 @@ const createGuestAccount = async () => {
 };
 
 
+const switchGuestAccountToRealAccount = async (user: IUser, payload: TRegistrationPayload) => {
+  // Implementation for switching guest account to real account
+
+  const existingUser = await User.findById(user._id);
+  if (!existingUser) {
+    throw new BadRequestError('Guest account not found.');
+  }
+  
+  existingUser.fullName = payload.fullName;
+  existingUser.timezone = payload.timezone;
+  existingUser.email = payload.email;
+  existingUser.password = payload.password;
+  existingUser.verification.emailVerifiedAt = null; 
+  existingUser.role = USER_ROLE.USER;
+  existingUser.status = USER_STATUS.ACTIVE;
+  
+  await existingUser.save();
+
+  try{
+   await sendVerificationOtp(existingUser._id, payload.email);
+  }catch{
+    throw new BadRequestError('Failed to send verification email. Try again.');
+  }
+
+  return null;
+
+};
+
+
+
 const updateUserProfileImage = async (user: IUser, files: TProfileImage) => {
   if (!files?.profile_image?.length) {
     throw new BadRequestError('No profile image provided');
@@ -180,6 +210,7 @@ const getUserProfile = async (user: IUser) => {
 export const userService = {
   createAccount,
   createGuestAccount,
+  switchGuestAccountToRealAccount,
   updateUserProfileImage,
   updateUserProfile,
   getUserProfile,

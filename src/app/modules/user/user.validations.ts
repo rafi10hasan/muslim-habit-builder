@@ -58,13 +58,13 @@ const createAuthSchema = z.object({
     },
   }),
 
-  fcmToken: z.string({
-    error: (issue) => {
-      if (issue.input === undefined) return 'FCM token is required';
-      if (typeof issue.input !== 'string') return 'FCM token must be a string';
-      return 'Invalid FCM token format';
-    },
-  }),
+  // fcmToken: z.string({
+  //   error: (issue) => {
+  //     if (issue.input === undefined) return 'FCM token is required';
+  //     if (typeof issue.input !== 'string') return 'FCM token must be a string';
+  //     return 'Invalid FCM token format';
+  //   },
+  // }),
 
 });
 

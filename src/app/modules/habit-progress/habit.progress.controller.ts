@@ -30,7 +30,21 @@ const getIndividualHabitAnalytics = asyncHandler(async (req: Request, res: Respo
 }
 )
 
+const restartProgressIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const { habitId } = req.params;
+    const result = await habitProgressService.restartProgress(req.user, habitId as string);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: null,
+        data: result,
+    })
+}
+)
+
 export const habitProgressController = {
     getOverviewProgressAndAnalytics,
-    getIndividualHabitAnalytics
+    getIndividualHabitAnalytics,
+    restartProgressIntoDb
 }

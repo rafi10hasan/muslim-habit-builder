@@ -3,6 +3,9 @@ import { HabitLog } from "../habit-logger/habit.logger.model";
 import { UserHabit } from "../user-habit/user.habit.model";
 import { buildDateBasedOnTimeZone } from "../user-habit/user.habit.utils";
 import { IUser } from "../user/user.interface";
+import { Types } from "mongoose";
+import { LOG_STATUS } from "../habit-logger/habit.logger.constant";
+import { NotFoundError } from "../../errors/request/apiError";
 
 
 
@@ -523,9 +526,39 @@ const getIndividualHabitAnalytics = async (
 };
 
 
+const restartProgress = async (user: IUser, habitId: string) => {
+  try {
+
+    const todayStr = new Date().toISOString().split('T')[0];
+   
+    const habitLog = await HabitLog.findOne({
+      user: user._id, 
+      userHabit: new Types.ObjectId(habitId),
+      date: todayStr
+    });
+
+    if (!habitLog) {
+      throw new NotFoundError("No habit log found for today.");
+    }
+
+    if (habitLog.status === LOG_STATUS.COMPLETED) {
+      habitLog.status = LOG_STATUS.PENDING;
+      habitLog.completedAt = null; 
+      
+     
+      await habitLog.save();
+    }
+
+    return habitLog;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const habitProgressService = {
     getCombinedProgressAndAnalytics,
-    getIndividualHabitAnalytics
+    getIndividualHabitAnalytics,
+    restartProgress
 }
 
 

@@ -5,6 +5,7 @@ import { IUser } from '../user/user.interface';
 import { SYSTEM_HABIT_MESSAGES } from './system.habit.constant';
 import { HabitTemplate } from './system.habit.model';
 import { TCreateHabitTemplate } from './system.habit.zod';
+import { USER_ROLE } from '../user/user.constant';
 
 
 const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
@@ -40,7 +41,8 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
             _id: { $nin: Array.from(connectedTemplateIds) },
         }),
     }).lean();
-
+    
+    console.log({ topLevelTemplates })
     const topLevelIds = topLevelTemplates.map(t => t._id);
 
     const allChildren = await HabitTemplate.find({
@@ -100,6 +102,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
             isUserActive,
             category: t.category,
             infoContent: t.infoContent,
+            isGuestLocked: user.role === USER_ROLE.GUEST ? t.isGuestLocked : undefined
         });
     }
 
@@ -158,7 +161,6 @@ const createHabitTemplateIntoDB = async (payload: TCreateHabitTemplate) => {
         throw new NotFoundError(SYSTEM_HABIT_MESSAGES.CREATION_FAILED)
     }
     return {
-
         name: newTemplate.name,
         category: newTemplate.category,
         habitType: newTemplate.habitType,

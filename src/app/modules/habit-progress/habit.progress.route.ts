@@ -20,4 +20,9 @@ habitProgressRouter.get(
     habitProgressController.getIndividualHabitAnalytics,
 );
 
+habitProgressRouter.patch(
+    '/restart/:habitId',
+    authMiddleware(USER_ROLE.USER,USER_ROLE.GUEST),
+    habitProgressController.restartProgressIntoDb,
+);
 export default habitProgressRouter;
