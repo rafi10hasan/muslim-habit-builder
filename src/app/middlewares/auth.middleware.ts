@@ -11,7 +11,7 @@ const authMiddleware = (...requiredRoles: string[]) => {
     try {
 
       const token = req.headers.authorization?.replace('Bearer ', '') || '';
-
+      console.log({token})
       // checking if the token is missing
       if (!token) {
         throw new UnauthorizedError('Unauthorized Access');
