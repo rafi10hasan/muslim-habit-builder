@@ -989,7 +989,6 @@ const getHabitDetail = async (user: IUser, userHabitId: string) => {
         showOnTodayScreen: habit.showOnTodayScreen,
         isLocked: habit.isLocked,
         customDetails: habit.customDetails ?? null,
-        // obligatory_prayer হলেই connectedHabits দেখাবে
         connectedHabits: isObligatoryPrayer
             ? (habit.connectedHabits ?? [])
                 .sort((a, b) => a.order - b.order)
