@@ -261,7 +261,7 @@ const resendEmailVerificationOtpAgain = async (email: string) => {
 const forgotPassword = async (email: string) => {
   const normalizedEmail = email.trim().toLowerCase();
   const user = await userRepository.findByEmail(normalizedEmail, "_id email");
-
+ 
   if (!user) {
     throw new UnauthorizedError('User not found!');
   }

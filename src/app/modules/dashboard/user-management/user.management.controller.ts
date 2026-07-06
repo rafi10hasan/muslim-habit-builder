@@ -26,7 +26,30 @@ const getAllUsersIntoDb = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
+const getUserDetailsIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const result = await userManagementService.getUserDetails(req.params.userId as string);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'User details retrieved successfully',
+        data: result,
+    });
+});
+
+const updateStatusChange = asyncHandler(async (req: Request, res: Response) => {
+    const result = await userManagementService.updateUserStatus(req.params.userId as string, req.body);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'User status updated successfully',
+        data: result,
+    });
+});
+
+
 export const userManagementController = {
   getUserStatsIntoDb,
   getAllUsersIntoDb,
+  updateStatusChange,
+  getUserDetailsIntoDb
 }
