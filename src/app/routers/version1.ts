@@ -6,7 +6,6 @@ import adminRouter from '../modules/dashboard';
 import faqRouter from '../modules/Faq/faq.route';
 import habitProgressRouter from '../modules/habit-progress/habit.progress.route';
 import habitTemplateRouter from '../modules/habit-template/system.habit.route';
-import quranContentRouter from '../modules/quran-content/quran.content.route';
 import userHabitRouter from '../modules/user-habit/user.habit.route';
 import userRouter from '../modules/user/user.route';
 
@@ -51,11 +50,6 @@ const appRouters = [
   {
     path: '/bug',
     router: bugRouter,
-  },
-
-  {
-    path: '/quran-content',
-    router: quranContentRouter,
   },
 
   {

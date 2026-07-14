@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { CONNECTED_PRAYERS, HABIT_CATEGORIES, HABIT_LEVELS } from '../../../interfaces';
+import { ALLOW_CONNECTED_PRAYERS, CONNECTED_PRAYERS, HABIT_CATEGORIES, HABIT_LEVELS } from '../../../interfaces';
 import { FREQUENCY_TYPES, HABIT_LOCATIONS, WEEK_DAYS } from '../user-habit/user.habit.constant';
 import { FREQUENCIES, HABIT_TYPES } from './system.habit.constant';
 import { IDefaultFrequency, IHabitTemplate } from './system.habit.interface';
@@ -45,7 +45,7 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
 
     allowConnectedPrayers: {
       type: [String],
-      enum: Object.values(CONNECTED_PRAYERS),
+      enum: Object.values(ALLOW_CONNECTED_PRAYERS),
       default: []
     },
 

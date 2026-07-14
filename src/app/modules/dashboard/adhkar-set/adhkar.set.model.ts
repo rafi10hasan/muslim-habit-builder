@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
-import { CONNECTED_PRAYERS } from '../../../interfaces';
-import { IAdhkarSet } from './adhkar.set.interface';
+import { CONNECTED_PRAYERS } from '../../../../interfaces';
 import { ADHKAR_TYPES } from './adhkar.set.constant';
+import { IAdhkarSet } from './adhkar.set.interface';
 
 // adhkar set schema
 const adhkarItemSchema = new Schema({

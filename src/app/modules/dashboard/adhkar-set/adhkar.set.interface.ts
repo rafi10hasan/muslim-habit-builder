@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
+import { ConnectedPrayer } from '../../../../interfaces';
 import { AdhkarType } from './adhkar.set.constant';
-import { ConnectedPrayer } from '../../../interfaces';
 
 
 export type IAdhkarItem = {
@@ -17,21 +17,21 @@ export type IAdhkarItem = {
 
 export interface IAdhkarSet {
   _id: Types.ObjectId;
-  
-  name: string;  
+
+  name: string;
 
   nameArabic?: string;
-  
+
   type: AdhkarType;
-  
+
   connectedPrayer?: ConnectedPrayer;
-  
-  totalCount: number;         
-  
+
+  totalCount: number;
+
   isActive: boolean;
-  
-  items: IAdhkarItem[];       
-  
+
+  items: IAdhkarItem[];
+
   createdAt: Date;
 
   updatedAt: Date;

@@ -14,6 +14,17 @@ export const CONNECTED_PRAYERS = {
 export type ConnectedPrayer = (typeof CONNECTED_PRAYERS)[keyof typeof CONNECTED_PRAYERS];
 
 
+export const ALLOW_CONNECTED_PRAYERS = {
+    FAJR: "Fajr",
+    DHUHR: "Dhuhr",
+    ASR: "Asr",
+    MAGHRIB: "Maghrib",
+    ISHA: "Isha And Witr",
+    NULL: null,
+} as const;
+export type AllowedConnectedPrayer = (typeof ALLOW_CONNECTED_PRAYERS)[keyof typeof ALLOW_CONNECTED_PRAYERS];
+
+
 export const HABIT_CATEGORIES = {
     PRAYER: "Prayer",
     QURAN: "Quran",
