@@ -44,4 +44,24 @@ quranContentRouter.post(
     quranContentController.addVerseInQuranContent,
 );
 
+quranContentRouter.post(
+    '/image/reorder/:id',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    quranContentController.reOrderVerseInQuranContent,
+);
+
+quranContentRouter.delete(
+    '/image/delete/:id',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    quranContentController.deleteVerseImageInQuranContent,
+);
+
+quranContentRouter.put(
+    '/image/replace/:id',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    uploadFile(),
+    validateFileSizes,
+    quranContentController.replaceVerseImageInQuranContent,
+);
+
 export default quranContentRouter;

@@ -55,9 +55,44 @@ const addVerseInQuranContent = asyncHandler(async (req: Request, res: Response) 
     });
 });
 
+
+const reOrderVerseInQuranContent = asyncHandler(async (req: Request, res: Response) => {
+    const result = await quranContentService.reorderVerseImages(req.params.id as string, req.body);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Quran verse order updated successfully',
+        data: result,
+    });
+});
+
+
+const deleteVerseImageInQuranContent = asyncHandler(async (req: Request, res: Response) => {
+    const result = await quranContentService.deleteVerseImage(req.params.id as string, req.body.imageUrl as string);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Quran verse image deleted successfully',
+        data: result,
+    });
+});
+
+const replaceVerseImageInQuranContent = asyncHandler(async (req: Request, res: Response) => {
+    const result = await quranContentService.replaceVerseImage(req.params.id as string, req.body.imageUrl as string, req.files as TQuranContentImages);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Quran verse image replaced successfully',
+        data: result,
+    });
+});
+
 export const quranContentController = {
     createQuranContentIntoDb,
     getSingleQuranContentIntoDb,
     getQuranContentPreview,
-    addVerseInQuranContent
+    addVerseInQuranContent,
+    reOrderVerseInQuranContent,
+    deleteVerseImageInQuranContent,
+    replaceVerseImageInQuranContent
 };

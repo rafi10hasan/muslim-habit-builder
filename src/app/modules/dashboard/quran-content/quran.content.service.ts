@@ -1,6 +1,7 @@
 
 import { deleteImageFromCloudinary } from "../../../cloudinary/deleteImageFromCloudinary";
 import { uploadToCloudinary } from "../../../cloudinary/uploadImageToCLoudinary";
+import { BadRequestError, NotFoundError } from "../../../errors/request/apiError";
 import { TQuranContentImages } from "./quran.content.interface";
 import { QuranContent } from "./quran.content.model";
 import { TQuranContentPayload } from "./quran.content.zod";
@@ -98,7 +99,7 @@ const addVerse = async (
         }
 
         const refinedImages = uploadedVerseImages.map((url, index) => ({
-            order: index + 1,
+            order: existingContent.images.length + index + 1,
             imageUrl: url,
         }));
 
@@ -120,10 +121,153 @@ const addVerse = async (
     }
 };
 
+// reorder the image
+
+const reorderVerseImages = async (
+    id: string,
+    newOrder: { imageUrl: string; order: number }
+) => {
+    // 1. Fetch the full document to update fields cleanly
+    const existingContent = await QuranContent.findById(id);
+
+    if (!existingContent) {
+        throw new NotFoundError("Quran content not found");
+    }
+
+    // 2. Find the target image that needs to be reordered
+    const targetImage = existingContent.images.find(
+        (image) => image.imageUrl === newOrder.imageUrl
+    );
+
+    if (!targetImage) {
+        throw new NotFoundError("Image with the specified URL not found");
+    }
+
+    // Keep track of the target image's old order position
+    const oldOrder = targetImage.order; 
+    const targetNewOrder = newOrder.order;
+
+    // 3. Swap logic: Find the image currently occupying the target position 
+    // and move it to the target image's original position
+    existingContent.images.forEach((image) => {
+        if (image.imageUrl !== newOrder.imageUrl && image.order === targetNewOrder) {
+            image.order = oldOrder;
+        }
+    });
+
+    // 4. Assign the new order position to the target image
+    targetImage.order = targetNewOrder;
+
+    // 5. Fix Array Index: Sort the actual array elements based on the updated 'order' property
+    // Mongoose requires a re-assignment or explicit sort to track index changes correctly
+    existingContent.images = existingContent.images.sort((a, b) => a.order - b.order);
+
+    // 6. Persist the changes safely in the database
+    await existingContent.save();
+    
+    return existingContent;
+};
+
+// delete verse image
+const deleteVerseImage = async (id: string, imageUrlToDelete: string) => {
+    // 1. Fetch the full document
+    const existingContent = await QuranContent.findById(id);
+
+    if (!existingContent) {
+        throw new Error("Quran content not found");
+    }
+
+    // 2. Find the index of the image that needs to be deleted
+    const targetIndex = existingContent.images.findIndex(
+        (image) => image.imageUrl === imageUrlToDelete
+    );
+
+    if (targetIndex === -1) {
+        throw new Error("Image not found in this content");
+    }
+
+    const deletedOrder = existingContent.images[targetIndex].order;
+
+    // 3. Use standard array .splice() instead of Mongoose .pull()
+    // Mongoose subdocument arrays track .splice() natively!
+    existingContent.images.splice(targetIndex, 1);
+
+    // 4. Shift logic: Update the order of the remaining images directly.
+    existingContent.images.forEach((image) => {
+        if (image.order > deletedOrder) {
+            image.order -= 1;
+        }
+    });
+
+    // 5. Save the document safely
+    await existingContent.save();
+
+    return existingContent;
+};
+
+
+// replace image
+const replaceVerseImage = async (
+    id: string,
+    oldImageUrl: string,
+    files: TQuranContentImages
+) => {
+    let newUploadedUrls: string[] = [];
+
+    try {
+       
+        const existingContent = await QuranContent.findById(id);
+        if (!existingContent) {
+            throw new Error("Quran content not found");
+        }
+
+
+        const targetIndex = existingContent.images.findIndex(
+            (image) => image.imageUrl === oldImageUrl
+        );
+
+        if (targetIndex === -1) {
+            throw new Error("Old image URL not found in this content");
+        }
+
+   
+        if (!files?.pages?.length) {
+            throw new Error("No new image file provided for replacement");
+        }
+
+        const uploads = await Promise.all(
+            files.pages.map((file) => uploadToCloudinary(file, 'quran_verse'))
+        );
+        newUploadedUrls = uploads.map((img) => img.secure_url);
+
+       
+        await deleteImageFromCloudinary(oldImageUrl);
+
+     
+        existingContent.images[targetIndex].imageUrl = newUploadedUrls[0];
+
+        await existingContent.save();
+
+        return existingContent;
+
+    } catch (error) {
+    
+        if (newUploadedUrls.length > 0) {
+            await Promise.all(
+                newUploadedUrls.map((url) => deleteImageFromCloudinary(url))
+            );
+        }
+   
+        throw error;
+    }
+};
 
 export const quranContentService = {
     createQuranContent,
     getSingleQuranContent,
     getQuranContentPreview,
-    addVerse
+    addVerse,
+    reorderVerseImages,
+    deleteVerseImage,
+    replaceVerseImage
 };

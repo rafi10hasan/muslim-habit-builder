@@ -1,7 +1,15 @@
 
-export const ANNOUNCEMENT_STATUS = {
+export const BILLING_PLAN = {
+  YEARLY_PLAN: "Yearly Plan",
+  MONTHLY_PLAN: "Monthly Plan",
+  QUARTERLY_PLAN: "Quarterly Plan",
+  BIANNUAL_PLAN: "Biannual Plan",
+} as const;
+
+export const DISCOUNT_STATUS = {
   ACTIVE: "Active",
   EXPIRED: "Expired",
-  SCHEDULED: "Scheduled",
 } as const;
-export type AnnouncementStatus = (typeof ANNOUNCEMENT_STATUS)[keyof typeof ANNOUNCEMENT_STATUS];
+export type DiscountStatus = (typeof DISCOUNT_STATUS)[keyof typeof DISCOUNT_STATUS];
+
+export type BillingPlan = (typeof BILLING_PLAN)[keyof typeof BILLING_PLAN];

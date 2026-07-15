@@ -1,31 +1,71 @@
 import { model, Schema } from "mongoose";
 
-import { ANNOUNCEMENT_STATUS } from "./discount.constant";
-import { IAnnouncement } from "./discount.interface";
+import { BILLING_PLAN, DISCOUNT_STATUS } from "./discount.constant";
+import { IDiscount } from "./discount.interface";
 
+/*
 
+export interface IDiscount extends Document{
+    
+code: string;
 
-const announcementSchema = new Schema<IAnnouncement>({
+discount: string;
+
+discountString: string;
+
+appliesTo: BillingPlan;
+
+usageLimit: number;
+
+validFrom: Date | null;
+
+validUntil: Date | null;
+
+status: DiscountStatus;
+
+createdAt: Date;
+
+updatedAt: Date;
+
+}
+
+*/
+
+const discountSchema = new Schema<IDiscount>({
  
-    title: {
+    code: {
         type: String,
-        required: true
+        required: true,
+        index: true
     },
-    description: {
+    discount: {
         type: String,
+        required: true,
+    },
+    discountString: {
+        type: String,
+        required: true,
+    },
+    appliesTo: {
+        type: String,
+        enum: Object.values(BILLING_PLAN),
+        required: true,
+    },
+    usageLimit: {
+        type: Number,
         required: true,
     },
     status: {
         type: String,
-        enum: Object.values(ANNOUNCEMENT_STATUS),
-        default: ANNOUNCEMENT_STATUS.SCHEDULED
+        enum: Object.values(DISCOUNT_STATUS),
+        default: DISCOUNT_STATUS.ACTIVE
     },
-    startedAt: {
+    validFrom: {
         type: Date,
         required: true,
         default: null,
     },
-    endedAt: {
+    validUntil: {
         type: Date,
         required: true,
         default: null,
@@ -39,7 +79,7 @@ const announcementSchema = new Schema<IAnnouncement>({
 
 );
 
-export const Announcement = model<IAnnouncement>('Announcement', announcementSchema);
+export const Discount = model<IDiscount>('Discount', discountSchema);
 
 /*
 

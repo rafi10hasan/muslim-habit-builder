@@ -1,18 +1,29 @@
+import { BillingPlan } from "./discount.constant";
+import { DiscountStatus } from "./discount.constant";
 
 
 
-
-export interface IAnnouncement extends Document{
+export interface IDiscount extends Document{
     
-title: string;
+code: string;
 
-description: string;
+discount: string;
 
-startedAt: Date | null;
+discountString: string;
 
-endedAt: Date | null;
+appliesTo: BillingPlan;
 
-status: string | null;
+usageLimit: number;
+
+totalUsage: number;
+
+totalDiscountGiven: number;
+
+validFrom: Date | null;
+
+validUntil: Date | null;
+
+status: DiscountStatus;
 
 createdAt: Date;
 

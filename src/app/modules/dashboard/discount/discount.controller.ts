@@ -2,55 +2,54 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import asyncHandler from "../../../../shared/asynchandler";
 import sendResponse from "../../../../shared/sendResponse";
-import { announcementService } from "./discount.service";
+import { discountService } from "./discount.service";
 
 
-
-// add habit
-const createAnnouncementIntoDb = asyncHandler(async (req: Request, res: Response) => {
-    const result = await announcementService.addAnnouncement(req.body)
+// add discount
+const createDiscountIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const result = await discountService.createDiscount(req.body);
     sendResponse(res, {
         statusCode: StatusCodes.CREATED,
         success: true,
-        message: "Announcement added successfully",
+        message: "Discount added successfully",
         data: result,
     })
 })
 
-const getAllAnnouncementsForAdmin = asyncHandler(async (req: Request, res: Response) => {
-    const result = await announcementService.getAllAnnouncements(req.query);
+const getAllDiscountsForAdmin = asyncHandler(async (req: Request, res: Response) => {
+    const result = await discountService.getAllDiscounts(req.query);
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
-        message: "Announcements retrieved successfully",
+        message: "Discounts retrieved successfully",
         meta: result.meta,
         data: result.data,
     })
 })
 
-const updateAnnouncementIntoDb = asyncHandler(async (req: Request, res: Response) => {
-    const result = await announcementService.updateAnnouncement(req.params.id as string, req.body);
+const updateDiscountIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const result = await discountService.updateDiscount(req.params.id as string, req.body);
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
-        message: "Announcement updated successfully",
+        message: "Discount updated successfully",
         data: result,
     })
 })
 
-const deleteAnnouncementIntoDb = asyncHandler(async (req: Request, res: Response) => {
-    const result = await announcementService.deleteAnnouncement(req.params.id as string);
+const deleteDiscountIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const result = await discountService.deleteDiscount(req.params.id as string);
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
-        message: "Announcement deleted successfully",
+        message: "Discount deleted successfully",
         data: result,
     })
 })
 
-export const announcementController = {
-    createAnnouncementIntoDb,
-    getAllAnnouncementsForAdmin,
-    updateAnnouncementIntoDb,
-    deleteAnnouncementIntoDb
+export const discountController = {
+    createDiscountIntoDb,
+    getAllDiscountsForAdmin,
+    updateDiscountIntoDb,
+    deleteDiscountIntoDb
 };
