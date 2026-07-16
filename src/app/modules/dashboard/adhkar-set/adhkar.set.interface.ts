@@ -1,10 +1,7 @@
 import { Types } from 'mongoose';
-import { ConnectedPrayer } from '../../../../interfaces';
-import { AdhkarType } from './adhkar.set.constant';
 
 
 export type IAdhkarItem = {
-  itemId: number;             // 1, 2, 3...
   title: string;              // "Seek Forgiveness"
   arabic: string;             // Arabic text
   transliteration: string;    // Roman transliteration
@@ -21,10 +18,6 @@ export interface IAdhkarSet {
   name: string;
 
   nameArabic?: string;
-
-  type: AdhkarType;
-
-  connectedPrayer?: ConnectedPrayer;
 
   totalCount: number;
 

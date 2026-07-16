@@ -1,13 +1,13 @@
 import { Router } from "express";
-import userManagementRouter from "./user-management/user.management.route";
 import userOverviewRouter from "./overview/overview.route";
+import userManagementRouter from "./user-management/user.management.route";
 
 import authMiddleware from "../../middlewares/auth.middleware";
+import quranContentRouter from "./quran-content/quran.content.route";
 import { USER_ROLE } from "../user/user.constant";
-import userBugRouter from "./bugs/bug.route";
 import { adminController } from "./admin/admin.controller";
 import announcementRouter from "./announcement/announcement.route";
-import quranContentRouter from "./quran-content/quran.content.route";
+import userBugRouter from "./bugs/bug.route";
 
 
 const adminRouter = Router();

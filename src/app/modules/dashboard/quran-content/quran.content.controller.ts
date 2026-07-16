@@ -19,7 +19,6 @@ const createQuranContentIntoDb = asyncHandler(async (req: Request, res: Response
 });
 
 
-
 const getSingleQuranContentIntoDb = asyncHandler(async (req: Request, res: Response) => {
 
     const result = await quranContentService.getSingleQuranContent(req.params.id as string);
@@ -30,7 +29,6 @@ const getSingleQuranContentIntoDb = asyncHandler(async (req: Request, res: Respo
         data: result,
     });
 });
-
 
 const getQuranContentPreview = asyncHandler(async (req: Request, res: Response) => {
 
@@ -43,7 +41,6 @@ const getQuranContentPreview = asyncHandler(async (req: Request, res: Response) 
     });
 });
 
-
 const addVerseInQuranContent = asyncHandler(async (req: Request, res: Response) => {
 
     const result = await quranContentService.addVerse(req.params.id as string, req.files as TQuranContentImages);
@@ -55,7 +52,6 @@ const addVerseInQuranContent = asyncHandler(async (req: Request, res: Response) 
     });
 });
 
-
 const reOrderVerseInQuranContent = asyncHandler(async (req: Request, res: Response) => {
     const result = await quranContentService.reorderVerseImages(req.params.id as string, req.body);
     sendResponse(res, {
@@ -65,7 +61,6 @@ const reOrderVerseInQuranContent = asyncHandler(async (req: Request, res: Respon
         data: result,
     });
 });
-
 
 const deleteVerseImageInQuranContent = asyncHandler(async (req: Request, res: Response) => {
     const result = await quranContentService.deleteVerseImage(req.params.id as string, req.body.imageUrl as string);

@@ -4,6 +4,7 @@ import { ConnectedPrayer, HabitCategory } from '../../../interfaces';
 import { BadRequestError, NotFoundError } from '../../errors/request/apiError';
 import { AdhkarSet } from '../dashboard/adhkar-set/adhkar.set.model';
 
+import { QuranContent } from '../dashboard/quran-content/quran.content.model';
 import { LOG_STATUS } from '../habit-logger/habit.logger.constant';
 import { HabitLog } from '../habit-logger/habit.logger.model';
 import { HABIT_TYPES } from '../habit-template/system.habit.constant';
@@ -14,7 +15,6 @@ import { IConnectedHabit, IFrequency } from './user.habit.interface';
 import { UserHabit } from './user.habit.model';
 import { buildDateBasedOnTimeZone } from './user.habit.utils';
 import { AddCustomHabitPayload, EditHabitPayload } from './user.habit.zod';
-import { QuranContent } from '../dashboard/quran-content/quran.content.model';
 
 
 // ─────────────────────────────────────────────────────────────

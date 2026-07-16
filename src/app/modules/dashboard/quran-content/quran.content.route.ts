@@ -2,11 +2,12 @@ import { Router } from 'express';
 
 import { quranContentController } from './quran.content.controller';
 
+
 import quranVerseValidationSchema from './quran.content.zod';
-import { uploadFile } from '../../../../helpers/fileuploader';
-import { validateFormDataRequest } from '../../../middlewares/request.validator';
-import { validateFileSizes } from '../../../middlewares/validateFileSize';
 import authMiddleware from '../../../middlewares/auth.middleware';
+import { uploadFile } from '../../../../helpers/fileuploader';
+import { validateFileSizes } from '../../../middlewares/validateFileSize';
+import { validateFormDataRequest } from '../../../middlewares/request.validator';
 import { USER_ROLE } from '../../user/user.constant';
 
 

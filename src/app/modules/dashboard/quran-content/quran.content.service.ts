@@ -1,7 +1,8 @@
 
+
 import { deleteImageFromCloudinary } from "../../../cloudinary/deleteImageFromCloudinary";
 import { uploadToCloudinary } from "../../../cloudinary/uploadImageToCLoudinary";
-import { BadRequestError, NotFoundError } from "../../../errors/request/apiError";
+import { NotFoundError } from "../../../errors/request/apiError";
 import { TQuranContentImages } from "./quran.content.interface";
 import { QuranContent } from "./quran.content.model";
 import { TQuranContentPayload } from "./quran.content.zod";
@@ -144,7 +145,7 @@ const reorderVerseImages = async (
     }
 
     // Keep track of the target image's old order position
-    const oldOrder = targetImage.order; 
+    const oldOrder = targetImage.order;
     const targetNewOrder = newOrder.order;
 
     // 3. Swap logic: Find the image currently occupying the target position 
@@ -164,7 +165,7 @@ const reorderVerseImages = async (
 
     // 6. Persist the changes safely in the database
     await existingContent.save();
-    
+
     return existingContent;
 };
 
@@ -215,7 +216,7 @@ const replaceVerseImage = async (
     let newUploadedUrls: string[] = [];
 
     try {
-       
+
         const existingContent = await QuranContent.findById(id);
         if (!existingContent) {
             throw new Error("Quran content not found");
@@ -230,7 +231,7 @@ const replaceVerseImage = async (
             throw new Error("Old image URL not found in this content");
         }
 
-   
+
         if (!files?.pages?.length) {
             throw new Error("No new image file provided for replacement");
         }
@@ -240,10 +241,10 @@ const replaceVerseImage = async (
         );
         newUploadedUrls = uploads.map((img) => img.secure_url);
 
-       
+
         await deleteImageFromCloudinary(oldImageUrl);
 
-     
+
         existingContent.images[targetIndex].imageUrl = newUploadedUrls[0];
 
         await existingContent.save();
@@ -251,13 +252,13 @@ const replaceVerseImage = async (
         return existingContent;
 
     } catch (error) {
-    
+
         if (newUploadedUrls.length > 0) {
             await Promise.all(
                 newUploadedUrls.map((url) => deleteImageFromCloudinary(url))
             );
         }
-   
+
         throw error;
     }
 };
