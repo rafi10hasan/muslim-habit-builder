@@ -1,35 +1,35 @@
 import { Router } from 'express';
 
 import authMiddleware from '../../../middlewares/auth.middleware';
-import { validateFormDataRequest } from '../../../middlewares/request.validator';
+import { validateFormDataRequest, validateRequest } from '../../../middlewares/request.validator';
 import { USER_ROLE } from '../../user/user.constant';
 import adhakarValidationSchema from './adhkar.set.zod';
 import { adhakarController } from './adhkar.set.controller';
 
 
-const AdhkarRouter = Router();
+const adhkarRouter = Router();
 
 // ==========================================
 // Main Adhkar Set Operations
 // ==========================================
 
 // 1. Create a new main Adhkar Set
-AdhkarRouter.post(
-    '/create',
+adhkarRouter.post(
+    '/add',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
-    validateFormDataRequest(adhakarValidationSchema.addAdhakarSchema),
+    validateRequest({body:adhakarValidationSchema.addAdhakarSchema}),
     adhakarController.createAdhakarIntoDb
 );
 
 // 2. Delete a main Adhkar Set completely
-AdhkarRouter.delete(
-    '/:setId',
+adhkarRouter.delete(
+    '/delete/:setId',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     adhakarController.deleteAdhakarSetFromDb
 );
 
 // 3. Preview/Get a single Adhkar Set with its sorted items
-AdhkarRouter.get(
+adhkarRouter.get(
     '/preview/:setId',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     adhakarController.previewAdhakarFromDb
@@ -40,26 +40,26 @@ AdhkarRouter.get(
 // ==========================================
 
 // 4. Add a new item inside an Adhkar Set
-AdhkarRouter.post(
+adhkarRouter.post(
     '/item/add/:setId',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
-    validateFormDataRequest(adhakarValidationSchema.adhakarItemValidationSchema),
+    validateRequest({body:adhakarValidationSchema.adhakarItemValidationSchema}),
     adhakarController.addAdhakarItemIntoDb
 );
 
 // 5. Update an existing item using its array index
-AdhkarRouter.patch(
+adhkarRouter.patch(
     '/item/update/:setId/:itemIndex',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
-    validateFormDataRequest(adhakarValidationSchema.updateAdhakarItemSchema),
+    validateRequest({body:adhakarValidationSchema.updateAdhakarItemSchema}),
     adhakarController.updateAdhakarItemInDb
 );
 
 // 6. Delete an item from the set using its array index
-AdhkarRouter.delete(
+adhkarRouter.delete(
     '/item/delete/:setId/:itemIndex',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     adhakarController.deleteAdhakarItemFromDb
 );
 
-export default AdhkarRouter;
+export default adhkarRouter;

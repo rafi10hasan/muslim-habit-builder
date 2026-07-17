@@ -39,7 +39,7 @@ const discountSchema = new Schema<IDiscount>({
         index: true
     },
     discount: {
-        type: String,
+        type: Number,
         required: true,
     },
     discountString: {

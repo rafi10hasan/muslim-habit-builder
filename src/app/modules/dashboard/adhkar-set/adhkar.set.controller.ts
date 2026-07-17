@@ -42,8 +42,8 @@ const addAdhakarItemIntoDb = asyncHandler(async (req: Request, res: Response) =>
 
 // 4. Update Item inside Adhkar Set
 const updateAdhakarItemInDb = asyncHandler(async (req: Request, res: Response) => {
-    const { setId, itemId } = req.params;
-    const result = await adhakarService.updateAdhakarItem(setId as string, Number(itemId), req.body);
+    const { setId, itemIndex } = req.params;
+    const result = await adhakarService.updateAdhakarItem(setId as string, Number(itemIndex), req.body);
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
@@ -54,8 +54,8 @@ const updateAdhakarItemInDb = asyncHandler(async (req: Request, res: Response) =
 
 // 5. Delete Item from Adhkar Set
 const deleteAdhakarItemFromDb = asyncHandler(async (req: Request, res: Response) => {
-    const { setId, itemId } = req.params;
-    const result = await adhakarService.deleteAdhakarItem(setId as string, Number(itemId));
+    const { setId, itemIndex } = req.params;
+    const result = await adhakarService.deleteAdhakarItem(setId as string, Number(itemIndex));
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,

@@ -8,6 +8,8 @@ import { USER_ROLE } from "../user/user.constant";
 import { adminController } from "./admin/admin.controller";
 import announcementRouter from "./announcement/announcement.route";
 import userBugRouter from "./bugs/bug.route";
+import discountRouter from "./discount/discount.route";
+import adhkarRouter from "./adhkar-set/adhkar.set.route";
 
 
 const adminRouter = Router();
@@ -16,8 +18,10 @@ const adminRouter = Router();
 adminRouter.use('/users', userManagementRouter);
 adminRouter.use('/overview', userOverviewRouter);
 adminRouter.use('/quran-content', quranContentRouter);
+adminRouter.use('/adhkar-sets', adhkarRouter);
 adminRouter.use('/bugs', userBugRouter);
 adminRouter.use('/get-me', authMiddleware(USER_ROLE.SUPER_ADMIN), adminController.getMeIntoDb);
 adminRouter.use('/announcement', announcementRouter);
+adminRouter.use('/discount', discountRouter);
 
 export default adminRouter;

@@ -3,47 +3,44 @@ import { Router } from "express";
 import authMiddleware from "../../../middlewares/auth.middleware";
 import { validateRequest } from "../../../middlewares/request.validator";
 import { USER_ROLE } from "../../user/user.constant";
-import { announcementController } from "../announcement/announcement.controller";
-import announcementValidationZodSchema from "./discount.zod";
+import discountValidationZodSchema from "./discount.zod";
+import { discountController } from "./discount.controller";
 
 
 
 
+const discountRouter = Router();
 
-
-const announcementRouter = Router();
-
-announcementRouter.post(
+discountRouter.post(
     '/add',
     authMiddleware(USER_ROLE.SUPER_ADMIN),
     validateRequest({
-        body: announcementValidationZodSchema.announcementSchema
+        body: discountValidationZodSchema.discountSchema
     }),
-    announcementController.createAnnouncementIntoDb,
+    discountController.createDiscountIntoDb,
 );
 
 
-
-announcementRouter.patch(
+discountRouter.patch(
     '/update/:id',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     validateRequest({
-        body: announcementValidationZodSchema.updateAnnouncementSchema,
+        body: discountValidationZodSchema.updateDiscountSchema,
     }),
-    announcementController.updateAnnouncementIntoDb,
+    discountController.updateDiscountIntoDb,
 );
 
-announcementRouter.delete(
+discountRouter.delete(
     '/delete/:id',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
-    announcementController.deleteAnnouncementIntoDb,
+    discountController.deleteDiscountIntoDb,
 );
 
-announcementRouter.get(
+discountRouter.get(
     '/retrieve',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
-    announcementController.getAllAnnouncementsForAdmin,
+    discountController.getAllDiscountsForAdmin,
 );
 
 
-export default announcementRouter;
+export default discountRouter;

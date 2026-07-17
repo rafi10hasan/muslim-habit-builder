@@ -1,14 +1,20 @@
 import { BadRequestError } from '../../../errors/request/apiError';
 import { IDiscount } from './discount.interface';
 import { Discount } from './discount.model';
+import { TDiscountPayload } from './discount.zod';
 
 // ১. Create Discount
-const createDiscount = async (payload: Partial<IDiscount>): Promise<IDiscount> => {
+const createDiscount = async (payload: TDiscountPayload) => {
     const isExist = await Discount.findOne({ code: payload.code });
     if (isExist) {
         throw new BadRequestError('Discount code already exists!');
     }
-    const result = await Discount.create(payload);
+
+    const newPayload = {
+        ...payload,
+        discountString: `${payload.discount}% OFF`,
+    }
+    const result = await Discount.create(newPayload);
     return result;
 };
 
@@ -23,7 +29,7 @@ const getAllDiscounts = async (query: Record<string, unknown>) => {
         matchStage.status = { $regex: status, $options: 'i' };
     }
 
-    if(plan){
+    if (plan) {
         matchStage.appliesTo = { $regex: plan, $options: 'i' };
     }
 
@@ -92,7 +98,7 @@ const getDiscountById = async (id: string): Promise<IDiscount | null> => {
 
 // ৪. Update Discount
 const updateDiscount = async (id: string, payload: Partial<IDiscount>): Promise<IDiscount | null> => {
-    
+
     if (payload.code) {
         const isExist = await Discount.findOne({ code: payload.code, _id: { $ne: id } });
         if (isExist) {
@@ -100,24 +106,29 @@ const updateDiscount = async (id: string, payload: Partial<IDiscount>): Promise<
         }
     }
 
-    const result = await Discount.findByIdAndUpdate(id, payload, {
+    const newPayload = {
+        ...payload,
+        discountString: `${payload.discount}% OFF`,
+    }
+
+    const result = await Discount.findByIdAndUpdate(id, newPayload, {
         new: true,
         runValidators: true
     });
-    
+
     if (!result) {
-        throw new Error('Discount not found to update!');
+        throw new BadRequestError('Discount not found to update!');
     }
     return result;
 };
 
 // ৫. Delete Discount
-const deleteDiscount = async (id: string): Promise<IDiscount | null> => {
-    const result = await Discount.findByIdAndDelete(id);
-    if (!result) {
-        throw new Error('Discount not found to delete!');
+const deleteDiscount = async (id: string)=> {
+    const result = await Discount.deleteOne({ _id: id });
+    if (result.deletedCount === 0) {
+        throw new BadRequestError('Discount not found to delete!');
     }
-    return result;
+    return null;
 };
 
 export const discountService = {

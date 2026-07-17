@@ -20,7 +20,7 @@ const deleteAdhakarSet = async (setId: string) => {
     if (!result) {
         throw new NotFoundError('Adhkar set not found');
     }
-    return result;
+    return null;
 };
 
 // 3. Add a new sub-item into an Adhkar Set
@@ -50,6 +50,7 @@ const addAdhakarItem = async (setId: string, itemPayload: TAdhakarItemPayload) =
 };
 
 const updateAdhakarItem = async (setId: string, itemIndex: number, updatePayload: TUpdateAdhakarItemPayload) => {
+    console.log('Updating Adhkar Item:', { setId, itemIndex, updatePayload });
     const adhakarSet = await AdhkarSet.findById(setId);
     if (!adhakarSet) {
         throw new NotFoundError('Adhkar set not found');
@@ -101,7 +102,7 @@ const deleteAdhakarItem = async (setId: string, itemIndex: number) => {
     adhakarSet.totalCount = adhakarSet.items.length;
 
     await adhakarSet.save();
-    return adhakarSet;
+    return null;
 };
 
 // 6. Preview and fetch the full Adhkar Set ordered sequentially

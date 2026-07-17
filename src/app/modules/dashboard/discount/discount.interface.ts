@@ -7,7 +7,7 @@ export interface IDiscount extends Document{
     
 code: string;
 
-discount: string;
+discount: number;
 
 discountString: string;
 
