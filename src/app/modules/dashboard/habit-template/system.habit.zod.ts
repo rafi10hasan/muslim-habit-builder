@@ -1,26 +1,26 @@
 import { z } from 'zod';
-import { CONNECTED_PRAYERS, HABIT_CATEGORIES, HABIT_LEVELS } from '../../../interfaces';
+import { CONNECTED_PRAYERS, HABIT_CATEGORIES, HABIT_LEVELS } from '../../../../interfaces';
 import {
   FREQUENCY_TYPE,
   WEEK_DAYS,
-} from '../../../shared/constants/habit.shared.types';
-import { FREQUENCY_TYPES } from '../user-habit/user.habit.constant';
+} from '../../../../shared/constants/habit.shared.types';
+import { FREQUENCY_TYPES } from '../../user-habit/user.habit.constant';
 import { HABIT_TYPES } from './system.habit.constant';
 
 export const frequencyZodSchema = z.object({
-    type: z.enum(Object.values(FREQUENCY_TYPES) as [string, ...string[]], {
-      error: (issue) => {
-        if (issue.input === undefined) return 'Default frequency type is required'
-        return `Invalid default frequency type. Must be one of: ${Object.values(FREQUENCY_TYPES).join(', ')}`
-      },
-    }),
-    selectedDays: z.array(z.enum(Object.values(WEEK_DAYS) as [string, ...string[]])).default([]),
-    everyNDays: z.number().optional(),
-  }).default({
-    type: FREQUENCY_TYPES.DAILY,
-    selectedDays: [],
-    everyNDays: undefined,
-  })
+  type: z.enum(Object.values(FREQUENCY_TYPES) as [string, ...string[]], {
+    error: (issue) => {
+      if (issue.input === undefined) return 'Default frequency type is required'
+      return `Invalid default frequency type. Must be one of: ${Object.values(FREQUENCY_TYPES).join(', ')}`
+    },
+  }),
+  selectedDays: z.array(z.enum(Object.values(WEEK_DAYS) as [string, ...string[]])).default([]),
+  everyNDays: z.number().optional(),
+}).default({
+  type: FREQUENCY_TYPES.DAILY,
+  selectedDays: [],
+  everyNDays: undefined,
+})
   .superRefine((data, ctx) => {
 
     if (data.type === FREQUENCY_TYPE.DAILY) {

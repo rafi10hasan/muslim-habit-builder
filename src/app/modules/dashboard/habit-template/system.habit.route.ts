@@ -1,8 +1,8 @@
 import { Router } from 'express';
 
-import authMiddleware from '../../middlewares/auth.middleware';
-import { validateRequest } from '../../middlewares/request.validator';
-import { USER_ROLE } from '../user/user.constant';
+import authMiddleware from '../../../middlewares/auth.middleware';
+import { validateRequest } from '../../../middlewares/request.validator';
+import { USER_ROLE } from '../../user/user.constant';
 import { habitTemplateController } from './system.habit.controller';
 import systemHabitValidationZodSchema from './system.habit.zod';
 

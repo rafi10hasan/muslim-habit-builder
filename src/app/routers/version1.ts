@@ -3,9 +3,9 @@ import authRouter from '../modules/auth/auth.route';
 import bugRouter from '../modules/bug/bug.route';
 import { contentRouter } from '../modules/content/content.route';
 import adminRouter from '../modules/dashboard';
+import habitTemplateRouter from '../modules/dashboard/habit-template/system.habit.route';
 import faqRouter from '../modules/Faq/faq.route';
 import habitProgressRouter from '../modules/habit-progress/habit.progress.route';
-import habitTemplateRouter from '../modules/habit-template/system.habit.route';
 import userHabitRouter from '../modules/user-habit/user.habit.route';
 import userRouter from '../modules/user/user.route';
 
@@ -21,7 +21,7 @@ const appRouters = [
     path: '/auth',
     router: authRouter,
   },
-  
+
   {
     path: '/content',
     router: contentRouter,

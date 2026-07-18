@@ -29,6 +29,12 @@ const updateAdhakarItemSchema = z.object({
     count: z.number().nullable().optional(),
 });
 
+const reorderAdhkarItemsByIndexSchema = z.object({
+    itemIndex: z.number().int().nonnegative("Item index must be a non-negative integer"),
+    newOrder: z.number().int().nonnegative("New order must be a non-negative integer"),
+});
+
+export type TReorderAdhkarItemsByIndexPayload = z.infer<typeof reorderAdhkarItemsByIndexSchema>;
 export type TAdhakarPayload = z.infer<typeof addAdhakarSchema>;
 export type TAdhakarItemPayload = z.infer<typeof adhakarItemValidationSchema>;
 export type TUpdateAdhakarItemPayload = z.infer<typeof updateAdhakarItemSchema>;
@@ -36,7 +42,8 @@ export type TUpdateAdhakarItemPayload = z.infer<typeof updateAdhakarItemSchema>;
 const adhakarValidationSchema = {
     addAdhakarSchema,
     adhakarItemValidationSchema,
-    updateAdhakarItemSchema
+    updateAdhakarItemSchema,
+    reorderAdhkarItemsByIndexSchema
 };
 
 export default adhakarValidationSchema;

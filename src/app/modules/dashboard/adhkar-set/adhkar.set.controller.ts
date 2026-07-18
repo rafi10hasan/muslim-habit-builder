@@ -76,11 +76,24 @@ const previewAdhakarFromDb = asyncHandler(async (req: Request, res: Response) =>
     });
 });
 
+const reorderAdhkarItemsByIndex = asyncHandler(async (req: Request, res: Response) => {
+    const { setId } = req.params;
+    const result = await adhakarService.reorderAdhkarItemsByIndex(setId as string, req.body);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Adhkar items reordered successfully',
+        data: result,
+    });
+});
+
 export const adhakarController = {
     createAdhakarIntoDb,
     deleteAdhakarSetFromDb,
     addAdhakarItemIntoDb,
     updateAdhakarItemInDb,
     deleteAdhakarItemFromDb,
-    previewAdhakarFromDb
+    previewAdhakarFromDb,
+    reorderAdhkarItemsByIndex
 };

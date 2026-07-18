@@ -1,6 +1,6 @@
 import { BadRequestError, NotFoundError } from "../../../errors/request/apiError";
 import { AdhkarSet } from "./adhkar.set.model";
-import { TAdhakarItemPayload, TAdhakarPayload, TUpdateAdhakarItemPayload } from "./adhkar.set.zod";
+import { TAdhakarItemPayload, TAdhakarPayload, TReorderAdhkarItemsByIndexPayload, TUpdateAdhakarItemPayload } from "./adhkar.set.zod";
 
 
 
@@ -30,7 +30,7 @@ const addAdhakarItem = async (setId: string, itemPayload: TAdhakarItemPayload) =
         throw new NotFoundError('Adhkar set not found');
     }
 
- 
+
     // Auto-assign order tracking based on current length
     const nextOrder = adhakarSet.items.length + 1;
 
@@ -49,6 +49,7 @@ const addAdhakarItem = async (setId: string, itemPayload: TAdhakarItemPayload) =
     return adhakarSet;
 };
 
+// update adhkar item
 const updateAdhakarItem = async (setId: string, itemIndex: number, updatePayload: TUpdateAdhakarItemPayload) => {
     console.log('Updating Adhkar Item:', { setId, itemIndex, updatePayload });
     const adhakarSet = await AdhkarSet.findById(setId);
@@ -111,10 +112,62 @@ const getAdhakarPreview = async (setId: string) => {
     if (!adhakarSet) {
         throw new NotFoundError('Adhkar set not found');
     }
-    
+
     // Sort array elements internally by their assigned sequential orders
     adhakarSet.items.sort((a, b) => a.order - b.order);
-    
+
+    return adhakarSet;
+};
+
+
+const reorderAdhkarItemsByIndex = async (
+    setId: string,
+    payload: { itemIndex: number; newOrder: number }
+) => {
+    // 1. Fetch the full document to update fields cleanly
+    const adhakarSet = await AdhkarSet.findById(setId);
+
+    if (!adhakarSet) {
+        throw new NotFoundError('Adhkar set not found');
+    }
+
+    const totalItems = adhakarSet.items.length;
+
+
+    if (totalItems < 2) {
+        throw new BadRequestError('at least 2 items are required to reorder the items');
+    }
+
+
+    // Validate that the provided itemIndex falls within the bounds of the array
+    if (payload.itemIndex < 0 || payload.itemIndex >= totalItems) {
+        throw new BadRequestError(`Invalid itemIndex`);
+    }
+
+
+    // 2. Extract the item array into a plain JS array to perform operations safely
+    const itemsArray = [...adhakarSet.items];
+
+    // 3. Remove the target item from its current index position
+    const [targetItem] = itemsArray.splice(payload.itemIndex, 1);
+
+    // 4. Calculate target array index based on the requested 1-based order
+    const targetArrayIndex = payload.newOrder - 1;
+
+    // 5. Insert the target item cleanly at its new position
+    itemsArray.splice(targetArrayIndex, 0, targetItem);
+
+    // 6. Loop through the array and systematically re-assign sequential 1-based order values
+    itemsArray.forEach((item, index) => {
+        item.order = index + 1;
+    });
+
+    // 7. Reassign the sorted array back to the Mongoose document field
+    adhakarSet.items = itemsArray as any;
+
+    // 8. Save the modifications down to the database
+    await adhakarSet.save();
+
     return adhakarSet;
 };
 
@@ -124,5 +177,6 @@ export const adhakarService = {
     addAdhakarItem,
     updateAdhakarItem,
     deleteAdhakarItem,
+    reorderAdhkarItemsByIndex,
     getAdhakarPreview
 };

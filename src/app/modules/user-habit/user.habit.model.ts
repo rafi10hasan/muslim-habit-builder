@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 
 import { CONNECTED_PRAYERS, HABIT_CATEGORIES, HABIT_LEVELS } from '../../../interfaces';
 import { WEEK_DAYS } from '../../../shared/constants/habit.shared.types';
-import { FREQUENCIES, HABIT_TYPES } from '../habit-template/system.habit.constant';
+import { FREQUENCIES, HABIT_TYPES } from '../dashboard/habit-template/system.habit.constant';
 import { FREQUENCY_TYPES, HABIT_LOCATIONS, TARGET_TYPES } from './user.habit.constant';
 import { IFrequency, IReminder, IUserHabit } from './user.habit.interface';
 

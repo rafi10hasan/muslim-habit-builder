@@ -54,7 +54,7 @@ const createQuranContent = async (
 const getSingleQuranContent = async (id: string) => {
     const result = await QuranContent.findById(id);
     if (!result) {
-        throw new Error("Quran content not found");
+        throw new NotFoundError("Quran content not found");
     }
     return result;
 };
@@ -63,12 +63,12 @@ const getSingleQuranContent = async (id: string) => {
 const getQuranContentPreview = async (id: string, index: number) => {
     const result = await QuranContent.findById(id).select('name images');
     if (!result) {
-        throw new Error("Quran content not found");
+        throw new NotFoundError("Quran content not found");
     }
 
     const image = result.images[index];
     if (!image) {
-        throw new Error("Image not found");
+        throw new NotFoundError("Image not found");
     }
     return {
         name: result.name,
@@ -85,7 +85,7 @@ const addVerse = async (
     const existingContent = await QuranContent.findById(id).select('images');
 
     if (!existingContent) {
-        throw new Error("Quran content not found");
+        throw new NotFoundError("Quran content not found");
     }
 
     let uploadedVerseImages: string[] = [];
@@ -175,7 +175,7 @@ const deleteVerseImage = async (id: string, imageUrlToDelete: string) => {
     const existingContent = await QuranContent.findById(id);
 
     if (!existingContent) {
-        throw new Error("Quran content not found");
+        throw new NotFoundError("Quran content not found");
     }
 
     // 2. Find the index of the image that needs to be deleted
@@ -184,7 +184,7 @@ const deleteVerseImage = async (id: string, imageUrlToDelete: string) => {
     );
 
     if (targetIndex === -1) {
-        throw new Error("Image not found in this content");
+        throw new NotFoundError("Image not found in this content");
     }
 
     const deletedOrder = existingContent.images[targetIndex].order;
@@ -219,7 +219,7 @@ const replaceVerseImage = async (
 
         const existingContent = await QuranContent.findById(id);
         if (!existingContent) {
-            throw new Error("Quran content not found");
+            throw new NotFoundError("Quran content not found");
         }
 
 
@@ -228,12 +228,12 @@ const replaceVerseImage = async (
         );
 
         if (targetIndex === -1) {
-            throw new Error("Old image URL not found in this content");
+            throw new NotFoundError("Old image URL not found in this content");
         }
 
 
         if (!files?.pages?.length) {
-            throw new Error("No new image file provided for replacement");
+            throw new NotFoundError("No new image file provided for replacement");
         }
 
         const uploads = await Promise.all(

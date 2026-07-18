@@ -1,7 +1,7 @@
 import z from "zod"
 import { CONNECTED_PRAYERS, HABIT_CATEGORIES } from "../../../interfaces"
 import { HABIT_CATEGORY, HABIT_LEVEL } from "../../../shared/constants/habit.shared.types"
-import { frequencyZodSchema } from "../habit-template/system.habit.zod"
+import { frequencyZodSchema } from "../dashboard/habit-template/system.habit.zod"
 import { FREQUENCY_TYPES, HABIT_LOCATIONS, TARGET_TYPES, WEEK_DAYS } from "./user.habit.constant"
 
 

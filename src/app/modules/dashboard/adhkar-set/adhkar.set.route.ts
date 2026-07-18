@@ -61,5 +61,13 @@ adhkarRouter.delete(
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     adhakarController.deleteAdhakarItemFromDb
 );
+// 7. Reorder items in the set by their index
+adhkarRouter.patch(
+    '/item/reorder/:setId',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    validateRequest({body:adhakarValidationSchema.reorderAdhkarItemsByIndexSchema}),
+    adhakarController.reorderAdhkarItemsByIndex
+);
+
 
 export default adhkarRouter;

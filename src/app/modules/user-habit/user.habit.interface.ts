@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import { ConnectedPrayer, HabitCategory, HabitLevel } from '../../../interfaces';
+import { Frequency, HabitType } from '../dashboard/habit-template/system.habit.constant';
 import { FrequencyType, HabitLocation, TargetType, WeekDay } from './user.habit.constant';
-import { Frequency, HabitType } from '../habit-template/system.habit.constant';
 
 
 export interface IFrequency {
@@ -33,7 +33,7 @@ export interface IUserHabit {
   allowedFrequencies: Frequency[];
   parent: Types.ObjectId | null;
   habitType?: HabitType | null;
-  level: HabitLevel;   
+  level: HabitLevel;
   group: Types.ObjectId | null;
   reminder: IReminder;
   isPreBuilt: boolean;

@@ -1,11 +1,11 @@
 import { Types } from 'mongoose';
-import { NotFoundError } from '../../errors/request/apiError';
-import { UserHabit } from '../user-habit/user.habit.model';
-import { IUser } from '../user/user.interface';
+import { NotFoundError } from '../../../errors/request/apiError';
+import { UserHabit } from '../../user-habit/user.habit.model';
+import { USER_ROLE } from '../../user/user.constant';
+import { IUser } from '../../user/user.interface';
 import { SYSTEM_HABIT_MESSAGES } from './system.habit.constant';
 import { HabitTemplate } from './system.habit.model';
 import { TCreateHabitTemplate } from './system.habit.zod';
-import { USER_ROLE } from '../user/user.constant';
 
 
 const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
@@ -41,7 +41,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
             _id: { $nin: Array.from(connectedTemplateIds) },
         }),
     }).lean();
-    
+
     console.log({ topLevelTemplates })
     const topLevelIds = topLevelTemplates.map(t => t._id);
 
@@ -169,8 +169,6 @@ const createHabitTemplateIntoDB = async (payload: TCreateHabitTemplate) => {
         group: newTemplate.group,
         parent: newTemplate.parent,
     }
-
-
 };
 
 

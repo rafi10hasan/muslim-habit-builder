@@ -1,36 +1,36 @@
 import { Request, Response } from "express";
-import asyncHandler from "../../../shared/asynchandler";
-import { habitTemplateService } from "./system.habit.service";
-import sendResponse from "../../../shared/sendResponse";
 import { StatusCodes } from "http-status-codes";
+import asyncHandler from "../../../../shared/asynchandler";
+import sendResponse from "../../../../shared/sendResponse";
+import { habitTemplateService } from "./system.habit.service";
 
 
 
 
 const createHabitTemplate = asyncHandler(async (req: Request, res: Response) => {
-  const result = await habitTemplateService.createHabitTemplateIntoDB(req.body);
-  sendResponse(res, {
-    statusCode: StatusCodes.CREATED,
-    success: true,
-    message: 'Habit template created successfully',
-    data: result,
-  });
+    const result = await habitTemplateService.createHabitTemplateIntoDB(req.body);
+    sendResponse(res, {
+        statusCode: StatusCodes.CREATED,
+        success: true,
+        message: 'Habit template created successfully',
+        data: result,
+    });
 });
 
 const getSystemHabits = asyncHandler(async (req: Request, res: Response) => {
-  const result = await habitTemplateService.GetAllHabitsWithStatus(req.user, req.query.category as string);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Habit templates fetched successfully',
-    data: result,
-  });
+    const result = await habitTemplateService.GetAllHabitsWithStatus(req.user, req.query.category as string);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Habit templates fetched successfully',
+        data: result,
+    });
 });
 
 
 export const habitTemplateController = {
-  createHabitTemplate,
-  getSystemHabits
+    createHabitTemplate,
+    getSystemHabits
 };
 
 /*

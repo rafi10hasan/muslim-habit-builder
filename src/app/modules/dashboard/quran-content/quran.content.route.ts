@@ -1,8 +1,5 @@
 import { Router } from 'express';
-
 import { quranContentController } from './quran.content.controller';
-
-
 import quranVerseValidationSchema from './quran.content.zod';
 import authMiddleware from '../../../middlewares/auth.middleware';
 import { uploadFile } from '../../../../helpers/fileuploader';

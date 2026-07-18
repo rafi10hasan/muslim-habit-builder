@@ -4,11 +4,11 @@ import { ConnectedPrayer, HabitCategory } from '../../../interfaces';
 import { BadRequestError, NotFoundError } from '../../errors/request/apiError';
 import { AdhkarSet } from '../dashboard/adhkar-set/adhkar.set.model';
 
+import { HABIT_TYPES } from '../dashboard/habit-template/system.habit.constant';
+import { HabitTemplate } from '../dashboard/habit-template/system.habit.model';
 import { QuranContent } from '../dashboard/quran-content/quran.content.model';
 import { LOG_STATUS } from '../habit-logger/habit.logger.constant';
 import { HabitLog } from '../habit-logger/habit.logger.model';
-import { HABIT_TYPES } from '../habit-template/system.habit.constant';
-import { HabitTemplate } from '../habit-template/system.habit.model';
 import { IUser } from '../user/user.interface';
 import { FREQUENCY_TYPES, WeekDay } from './user.habit.constant';
 import { IConnectedHabit, IFrequency } from './user.habit.interface';
