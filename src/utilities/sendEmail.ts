@@ -35,7 +35,6 @@ const sendMail = async ({ from, to, subject, html }: MailOptions): Promise<boole
       console.log(`Email sent to ${to}`);
     } catch (err) {
       console.error(`Email failed for ${to}:`, err);
-      // If you want to retry, do it synchronously in a loop here, not with setTimeout
     }
 
     // Wait for the sendMail operation to complete
