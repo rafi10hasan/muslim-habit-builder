@@ -21,7 +21,7 @@ adminRouter.use('/quran-content', quranContentRouter);
 adminRouter.use('/adhkar-sets', adhkarRouter);
 adminRouter.use('/bugs', userBugRouter);
 adminRouter.use('/get-me', authMiddleware(USER_ROLE.ADMIN,USER_ROLE.SUPER_ADMIN), adminController.getMeIntoDb);
-adminRouter.use('/update-profile', authMiddleware(USER_ROLE.SUPER_ADMIN), adminController.updateAdminProfileIntoDb);
+adminRouter.use('/update-profile', authMiddleware(USER_ROLE.ADMIN,USER_ROLE.SUPER_ADMIN), adminController.updateAdminProfileIntoDb);
 adminRouter.use('/announcement', announcementRouter);
 adminRouter.use('/discount', discountRouter);
 
