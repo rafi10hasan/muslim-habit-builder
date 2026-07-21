@@ -8,7 +8,7 @@ import { QuranContent } from "./quran.content.model";
 import { TQuranContentPayload } from "./quran.content.zod";
 
 
-
+// create quran content
 const createQuranContent = async (
     payload: TQuranContentPayload,
     files: TQuranContentImages
@@ -50,7 +50,7 @@ const createQuranContent = async (
     }
 };
 
-
+// get single quran content
 const getSingleQuranContent = async (id: string) => {
     const result = await QuranContent.findById(id);
     if (!result) {
@@ -123,7 +123,6 @@ const addVerse = async (
 };
 
 // reorder the image
-
 const reorderVerseImages = async (
     id: string,
     newOrder: { imageUrl: string; order: number }
@@ -206,7 +205,6 @@ const deleteVerseImage = async (id: string, imageUrlToDelete: string) => {
     return existingContent;
 };
 
-
 // replace image
 const replaceVerseImage = async (
     id: string,
@@ -263,6 +261,16 @@ const replaceVerseImage = async (
     }
 };
 
+const getQuranContentNames = async () => {
+    const result = await QuranContent.find().select('name _id');
+    return result.map(item => {
+        return {
+            id: item._id,
+            name: item.name
+        }
+    });
+}
+
 export const quranContentService = {
     createQuranContent,
     getSingleQuranContent,
@@ -270,5 +278,6 @@ export const quranContentService = {
     addVerse,
     reorderVerseImages,
     deleteVerseImage,
-    replaceVerseImage
+    replaceVerseImage,
+    getQuranContentNames
 };

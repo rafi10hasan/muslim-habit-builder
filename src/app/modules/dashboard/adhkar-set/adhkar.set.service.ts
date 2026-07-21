@@ -171,6 +171,18 @@ const reorderAdhkarItemsByIndex = async (
     return adhakarSet;
 };
 
+
+const getAdhkarSetNames = async () => {
+    const result = await AdhkarSet.find().select('name _id');
+    return result.map(item => {
+        return {
+            id: item._id,
+            name: item.name
+        }
+    });
+}
+
+
 export const adhakarService = {
     createAdhakar,
     deleteAdhakarSet,
@@ -178,5 +190,6 @@ export const adhakarService = {
     updateAdhakarItem,
     deleteAdhakarItem,
     reorderAdhkarItemsByIndex,
-    getAdhakarPreview
+    getAdhakarPreview,
+    getAdhkarSetNames
 };

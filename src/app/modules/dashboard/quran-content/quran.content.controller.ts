@@ -82,6 +82,16 @@ const replaceVerseImageInQuranContent = asyncHandler(async (req: Request, res: R
     });
 });
 
+const getQuranContentNames = asyncHandler(async (req: Request, res: Response) => {
+    const result = await quranContentService.getQuranContentNames();
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Quran content names retrieved successfully',
+        data: result,
+    });
+});
+
 export const quranContentController = {
     createQuranContentIntoDb,
     getSingleQuranContentIntoDb,
@@ -89,5 +99,6 @@ export const quranContentController = {
     addVerseInQuranContent,
     reOrderVerseInQuranContent,
     deleteVerseImageInQuranContent,
-    replaceVerseImageInQuranContent
+    replaceVerseImageInQuranContent,
+    getQuranContentNames
 };

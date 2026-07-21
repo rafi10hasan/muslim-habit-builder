@@ -1,4 +1,4 @@
-import nodemailer, { SendMailOptions} from 'nodemailer';
+import nodemailer, { SendMailOptions } from 'nodemailer';
 
 import { BadRequestError } from '../app/errors/request/apiError';
 import config from '../config';
@@ -29,16 +29,14 @@ const sendMail = async ({ from, to, subject, html }: MailOptions): Promise<boole
       html,
     };
 
-    setImmediate(async () => {
-      try {
-        await transporter.sendMail(mailOptions);
-        console.log(`Email sent to ${to}`);
-      } catch (err) {
-        console.error(`Email failed for ${to}:`, err);
-        // optionally, retry once after a delay
-        setTimeout(async () => await transporter.sendMail(mailOptions), 5000);
-      }
-    });
+    try {
+      // Wait for the sendMail operation to complete
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`Email sent to ${to}`);
+    } catch (err) {
+      console.error(`Email failed for ${to}:`, err);
+      // If you want to retry, do it synchronously in a loop here, not with setTimeout
+    }
 
     // Wait for the sendMail operation to complete
     // const info: SentMessageInfo = await transporter.sendMail(mailOptions);

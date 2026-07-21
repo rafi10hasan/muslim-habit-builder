@@ -62,4 +62,10 @@ quranContentRouter.put(
     quranContentController.replaceVerseImageInQuranContent,
 );
 
+quranContentRouter.get(
+    '/',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    quranContentController.getQuranContentNames,
+);
+
 export default quranContentRouter;

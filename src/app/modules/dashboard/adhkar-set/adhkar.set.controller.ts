@@ -88,6 +88,17 @@ const reorderAdhkarItemsByIndex = asyncHandler(async (req: Request, res: Respons
     });
 });
 
+
+const getAdhkarSetNames = asyncHandler(async (req: Request, res: Response) => {
+    const result = await adhakarService.getAdhkarSetNames();
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Adhkar set names retrieved successfully',
+        data: result,
+    });
+})
+
 export const adhakarController = {
     createAdhakarIntoDb,
     deleteAdhakarSetFromDb,
@@ -95,5 +106,6 @@ export const adhakarController = {
     updateAdhakarItemInDb,
     deleteAdhakarItemFromDb,
     previewAdhakarFromDb,
-    reorderAdhkarItemsByIndex
+    reorderAdhkarItemsByIndex,
+    getAdhkarSetNames
 };

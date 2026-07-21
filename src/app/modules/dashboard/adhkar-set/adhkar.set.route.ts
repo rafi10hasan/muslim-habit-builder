@@ -69,5 +69,11 @@ adhkarRouter.patch(
     adhakarController.reorderAdhkarItemsByIndex
 );
 
+// 8. Get names of all Adhkar Sets
+adhkarRouter.get(
+    '/',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    adhakarController.getAdhkarSetNames
+);
 
 export default adhkarRouter;
