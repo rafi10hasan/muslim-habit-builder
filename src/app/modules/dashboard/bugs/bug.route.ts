@@ -11,20 +11,20 @@ const userBugRouter = Router();
 
 userBugRouter.get(
   '/',
-  authMiddleware(USER_ROLE.SUPER_ADMIN),
+  authMiddleware(USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN),
   adminBugController.getAllBugsIntoDb,
 );
 
 userBugRouter.get(
   '/details/:bugId',
-  authMiddleware(USER_ROLE.SUPER_ADMIN),
+  authMiddleware(USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN),
   adminBugController.getBugDetails,
 );
 
 
 userBugRouter.patch(
   '/change-status/:bugId',
-  authMiddleware(USER_ROLE.SUPER_ADMIN),
+  authMiddleware(USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN),
   validateRequest({
     body: bugValidationZodSchema.updateBugSchema,
   }),

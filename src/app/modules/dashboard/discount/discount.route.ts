@@ -13,7 +13,7 @@ const discountRouter = Router();
 
 discountRouter.post(
     '/add',
-    authMiddleware(USER_ROLE.SUPER_ADMIN),
+    authMiddleware(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
     validateRequest({
         body: discountValidationZodSchema.discountSchema
     }),
