@@ -28,6 +28,13 @@ adhkarRouter.delete(
     adhakarController.deleteAdhakarSetFromDb
 );
 
+adhkarRouter.patch(
+    '/update/:setId',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    validateRequest({body:adhakarValidationSchema.updateAdhakarSetSchema}),
+    adhakarController.updateAdhakarIntoDb
+);
+
 // 3. Preview/Get a single Adhkar Set with its sorted items
 adhkarRouter.get(
     '/preview/:setId',

@@ -3,7 +3,7 @@ import { IDiscount } from './discount.interface';
 import { Discount } from './discount.model';
 import { TDiscountPayload } from './discount.zod';
 
-// ১. Create Discount
+// 1. Create Discount
 const createDiscount = async (payload: TDiscountPayload) => {
     const isExist = await Discount.findOne({ code: payload.code });
     if (isExist) {
@@ -18,7 +18,7 @@ const createDiscount = async (payload: TDiscountPayload) => {
     return result;
 };
 
-// ২. Get All Discounts (with simple filtering/pagination if needed)
+// 2. Get All Discounts (with simple filtering/pagination if needed)
 const getAllDiscounts = async (query: Record<string, unknown>) => {
     const { page = 1, limit = 10, searchTerm, status, plan } = query;
 
@@ -34,7 +34,7 @@ const getAllDiscounts = async (query: Record<string, unknown>) => {
     }
 
 
-    // Search Term logic add kora hoyeche
+    // Search term logic has been added
     if (searchTerm) {
         matchStage.$or = [
             { title: { $regex: searchTerm, $options: 'i' } },
@@ -68,7 +68,7 @@ const getAllDiscounts = async (query: Record<string, unknown>) => {
         },
     ]);
 
-    // Data handling securely check kora hoyeche jeno array empty thakle crash na kore
+    // Data handling is checked safely so it does not crash when the array is empty
     const users = result[0]?.data || [];
     const total = result[0]?.total[0]?.count || 0;
 
@@ -87,7 +87,7 @@ const getAllDiscounts = async (query: Record<string, unknown>) => {
     };
 };
 
-// ৩. Get Single Discount by ID or Code
+// 3. Get Single Discount by ID or Code
 const getDiscountById = async (id: string): Promise<IDiscount | null> => {
     const result = await Discount.findById(id);
     if (!result) {
@@ -96,7 +96,7 @@ const getDiscountById = async (id: string): Promise<IDiscount | null> => {
     return result;
 };
 
-// ৪. Update Discount
+// 4. Update Discount
 const updateDiscount = async (id: string, payload: Partial<IDiscount>): Promise<IDiscount | null> => {
 
     if (payload.code) {
@@ -122,7 +122,7 @@ const updateDiscount = async (id: string, payload: Partial<IDiscount>): Promise<
     return result;
 };
 
-// ৫. Delete Discount
+// 5. Delete Discount
 const deleteDiscount = async (id: string)=> {
     const result = await Discount.deleteOne({ _id: id });
     if (result.deletedCount === 0) {

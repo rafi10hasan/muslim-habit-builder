@@ -235,7 +235,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
                 { $set: { status: 'Skipped', skippedAt: new Date() } },
             );
 
-            // Parent এর connectedHabits থেকে disconnect করো
+            // Disconnect from the parent's connectedHabits
             await disconnectFromParents(userHabit._id);
 
             return null;
@@ -597,7 +597,7 @@ const toggleHabit = async (user: IUser, habitId: string, isActive: boolean) => {
         status: 'Pending',
     });
 
-    // Parent এর connectedHabits এ connect করো
+    // Connect to the parent's connectedHabits
     if (template.parent) {
         await connectToParent(userId, template.parent, newHabit._id);
     }
@@ -621,7 +621,7 @@ const getTodayHabits = async (user: IUser, category?: string) => {
         .format('ddd')
         .toLowerCase() as WeekDay;
 
-    // ── Connected habit IDs বের করো — top level এ দেখাবে না ──
+    // ── Collect connected habit IDs — they should not show at the top level ──
     const allActiveHabits = await UserHabit.find({
         user: userId,
         isActive: true,
@@ -755,16 +755,16 @@ const getTodayHabits = async (user: IUser, category?: string) => {
 
         if (connectedHabits.length > 0) {
             if (databaseParentStatus === 'Skipped') {
-                // Parent skip হলে → Skipped (নিচে যাবে sort এ)
+                // If the parent is skipped, mark it as Skipped so it sorts lower
                 finalDisplayStatus = 'Skipped';
             } else if (
                 databaseParentStatus === 'Completed' &&
                 connectedHabits.every(ch => ch.status === 'Completed')
             ) {
-                // Parent ও সব child Completed → Completed
+                // Parent and all children completed -> Completed
                 finalDisplayStatus = 'Completed';
             } else {
-                // যেকোনো একটা pending/incomplete → Pending
+                // Any pending or incomplete item -> Pending
                 finalDisplayStatus = 'Pending';
             }
         } else {
@@ -786,7 +786,7 @@ const getTodayHabits = async (user: IUser, category?: string) => {
     });
 
     // ── Sort: Pending → Completed → Skipped ──────────────────
-    // connectedHabits আছে বা নেই সব habit এ apply হবে
+    // This applies to all habits, whether they have connectedHabits or not
     const sortedResult = result.sort(
         (a, b) => (STATUS_ORDER[a.status] ?? 0) - (STATUS_ORDER[b.status] ?? 0),
     );
@@ -818,12 +818,12 @@ const getTodayHabits = async (user: IUser, category?: string) => {
 
 
 // ─────────────────────────────────────────────────────────────
-//  connectToParent — order এখন existing max থেকে
+//  connectToParent — order now starts from the existing max
 // ─────────────────────────────────────────────────────────────
 
 
 // ─────────────────────────────────────────────────────────────
-//  EditHabit — connectedHabits string[] আসবে, order index থেকে set হবে
+//  EditHabit — connectedHabits comes as string[], and order is set from the index
 // ─────────────────────────────────────────────────────────────
 const updateUserHabit = async (user: IUser, userHabitId: string, payload: EditHabitPayload) => {
     const userId = user._id as Types.ObjectId;
@@ -1072,7 +1072,7 @@ const searchHabitsToConnect = async (
 ) => {
     const userId = user._id as Types.ObjectId;
 
-    // Parent habit validate করো
+    // Validate the parent habit
     const parentHabit = await UserHabit.findOne({
         _id: userHabitId,
         user: userId,
@@ -1241,18 +1241,18 @@ const getDynamicHabitContent = async (user: IUser, contentId: string) => {
 
     const quranData = await QuranContent.findById(contentId).lean();
     console.log({ quranData })
-    // ১. Quran content check matrix mapping parsing query log format
+    // 1. Check whether the content is Quran data before parsing further
     if (quranData) {
         return quranData
     }
     const adhkarData = await AdhkarSet.findById(contentId).lean();
     console.log({ adhkarData })
-    // ২. Adhkar set content data tracking verification flow
+    // 2. Check whether the content is an Adhkar set before continuing
     if (adhkarData) {
         return adhkarData
     }
     console.log("Mongoose registered collection names:", mongoose.connection.modelNames());
-    // ৩. Error logging block framework handling standard query match exception
+    // 3. Standard error logging fallback for unmatched content queries
     throw new NotFoundError('Content details not found in either Quran or Adhkar records');
 
 };

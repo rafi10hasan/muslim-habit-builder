@@ -1,6 +1,6 @@
 import { BadRequestError, NotFoundError } from "../../../errors/request/apiError";
 import { AdhkarSet } from "./adhkar.set.model";
-import { TAdhakarItemPayload, TAdhakarPayload, TReorderAdhkarItemsByIndexPayload, TUpdateAdhakarItemPayload } from "./adhkar.set.zod";
+import { TAdhakarItemPayload, TAdhakarPayload, TReorderAdhkarItemsByIndexPayload, TUpdateAdhakarItemPayload, TUpdateAdhakarSetPayload } from "./adhkar.set.zod";
 
 
 
@@ -22,6 +22,17 @@ const deleteAdhakarSet = async (setId: string) => {
     }
     return null;
 };
+
+
+
+const updateAdhakarSet = async (id: string, payload: TUpdateAdhakarSetPayload) => {
+    const result = await AdhkarSet.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+
+    if (!result) {
+        throw new NotFoundError("Adhkar set not found to update");
+    }
+    return null;
+}
 
 // 3. Add a new sub-item into an Adhkar Set
 const addAdhakarItem = async (setId: string, itemPayload: TAdhakarItemPayload) => {
@@ -191,5 +202,6 @@ export const adhakarService = {
     deleteAdhakarItem,
     reorderAdhkarItemsByIndex,
     getAdhakarPreview,
-    getAdhkarSetNames
+    getAdhkarSetNames,
+    updateAdhakarSet
 };

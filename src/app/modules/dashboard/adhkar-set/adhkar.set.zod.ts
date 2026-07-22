@@ -6,6 +6,11 @@ const addAdhakarSchema = z.object({
     nameArabic: z.string().optional(),
 });
 
+const updateAdhakarSetSchema = z.object({
+    name: z.string().min(1, "Name is required").optional(),
+    nameArabic: z.string().optional(),
+});
+
 // 2. Schema for adding a new Adhkar Item (Required fields)
 const adhakarItemValidationSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -38,12 +43,14 @@ export type TReorderAdhkarItemsByIndexPayload = z.infer<typeof reorderAdhkarItem
 export type TAdhakarPayload = z.infer<typeof addAdhakarSchema>;
 export type TAdhakarItemPayload = z.infer<typeof adhakarItemValidationSchema>;
 export type TUpdateAdhakarItemPayload = z.infer<typeof updateAdhakarItemSchema>;
+export type TUpdateAdhakarSetPayload = z.infer<typeof updateAdhakarSetSchema>;
 
 const adhakarValidationSchema = {
     addAdhakarSchema,
     adhakarItemValidationSchema,
     updateAdhakarItemSchema,
-    reorderAdhkarItemsByIndexSchema
+    reorderAdhkarItemsByIndexSchema,
+    updateAdhakarSetSchema
 };
 
 export default adhakarValidationSchema;

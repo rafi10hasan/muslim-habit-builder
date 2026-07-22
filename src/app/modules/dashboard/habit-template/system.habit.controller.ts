@@ -40,13 +40,13 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
     const templateFilter: any = { isActive: true };
     if (category) templateFilter.category = category;
 
-    // শুধু top-level templates আনো (group child না)
+    // Fetch only top-level templates, not group children
     const topLevelTemplates = await HabitTemplate.find({
         ...templateFilter,
         group: null,
     }).lean();
 
-    // User এর সব UserHabit আনো
+    // Fetch all UserHabits for the user
     const userHabits = await UserHabit.find({ user: userId })
         .select('template isActive _id')
         .lean();
@@ -68,7 +68,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
     for (const t of topLevelTemplates) {
         const templateId = t._id.toString();
 
-        // Group হলে children এর isActive check করো
+        // If this is a group, check whether its children are active
         let isUserActive = false;
 
         if (t.isGroup) {

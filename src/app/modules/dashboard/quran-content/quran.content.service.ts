@@ -1,11 +1,12 @@
 
 
+import mongoose from "mongoose";
 import { deleteImageFromCloudinary } from "../../../cloudinary/deleteImageFromCloudinary";
 import { uploadToCloudinary } from "../../../cloudinary/uploadImageToCLoudinary";
 import { NotFoundError } from "../../../errors/request/apiError";
 import { TQuranContentImages } from "./quran.content.interface";
 import { QuranContent } from "./quran.content.model";
-import { TQuranContentPayload } from "./quran.content.zod";
+import { TQuranContentPayload, TQuranContentUpdatePayload } from "./quran.content.zod";
 
 
 // create quran content
@@ -49,6 +50,59 @@ const createQuranContent = async (
         throw error;
     }
 };
+
+// delete quran content
+const deleteQuranContent = async (id: string) => {
+    // 1. Start a Mongoose session
+    const session = await mongoose.startSession();
+    
+    // 2. Start the transaction
+    session.startTransaction();
+
+    try {
+        // Find the content (using session is a good practice here)
+        const result = await QuranContent.findById(id).session(session);
+        
+        if (!result) {
+            throw new Error("Content not found");
+        }
+
+        const deletedImages = result?.images.map(img => img.imageUrl) || [];
+
+        // 3. Delete the document from the database (pass the session)
+        await QuranContent.findByIdAndDelete(id, { session });
+
+        // 4. Delete images from Cloudinary
+        await Promise.all(
+            deletedImages.map((url) => deleteImageFromCloudinary(url))
+        );
+
+        // 5. If everything is successful, commit the transaction
+        await session.commitTransaction();
+        
+        return null;
+
+    } catch (error) {
+        // 6. If any error occurs (DB or Cloudinary), rollback the transaction
+        await session.abortTransaction();
+        throw error; // Re-throw the error for the global error handler
+        
+    } finally {
+        // 7. End the session in the finally block so it always runs
+        session.endSession();
+    }
+};
+
+// update quran content
+const updateQuranContent = async (id: string, payload: TQuranContentUpdatePayload) => {
+    const result = await QuranContent.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+
+    if (!result) {
+        throw new NotFoundError("Quran content not found to update");
+    }
+    return null;
+}
+
 
 // get single quran content
 const getSingleQuranContent = async (id: string) => {
@@ -274,9 +328,11 @@ const getQuranContentNames = async () => {
 export const quranContentService = {
     createQuranContent,
     getSingleQuranContent,
+    updateQuranContent,
     getQuranContentPreview,
     addVerse,
     reorderVerseImages,
+    deleteQuranContent,
     deleteVerseImage,
     replaceVerseImage,
     getQuranContentNames

@@ -16,6 +16,17 @@ const createAdhakarIntoDb = asyncHandler(async (req: Request, res: Response) => 
     });
 });
 
+// update main adhkar set
+const updateAdhakarIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const result = await adhakarService.updateAdhakarSet(req.params.setId as string,req.body);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Adhkar set has been updated successfully',
+        data: result,
+    });
+});
+
 // 2. Delete Main Adhkar Set Completely
 const deleteAdhakarSetFromDb = asyncHandler(async (req: Request, res: Response) => {
     const { setId } = req.params;
@@ -107,5 +118,6 @@ export const adhakarController = {
     deleteAdhakarItemFromDb,
     previewAdhakarFromDb,
     reorderAdhkarItemsByIndex,
-    getAdhkarSetNames
+    getAdhkarSetNames,
+    updateAdhakarIntoDb
 };

@@ -19,11 +19,11 @@ const logFormat = winston.format.combine(
 
 const transports: winston.transport[] = [];
 
-// Vercel-এর মতো সার্ভারলেস প্ল্যাটফর্মে ফাইল রাইটিং এড়ানোর জন্য এই চেকটি দরকার
+// This check is needed to avoid file writes on serverless platforms like Vercel
 const isVercel = process.env.VERCEL === '1';
 
 if (config.node_env === 'production' && !isVercel) {
-  // VPS বা নিজস্ব সার্ভারে (যেখানে ফাইল রাইট করা যায়) থাকলে ফাইল লগ চালু থাকবে
+  // File logging stays enabled on a VPS or self-hosted server where file writes are allowed
   // Log rotation for error logs
   transports.push(
     new DailyRotateFile({
@@ -47,7 +47,7 @@ if (config.node_env === 'production' && !isVercel) {
     })
   );
 } else {
-  // লোকাল ডেভেলপমেন্টে অথবা Vercel-এর মতো রিড-অনলি সার্ভারলেস প্ল্যাটফর্মে শুধু কনসোলে লগ হবে
+  // In local development or read-only serverless platforms like Vercel, logs go to the console only
   transports.push(
     new winston.transports.Console({
       format: winston.format.combine(

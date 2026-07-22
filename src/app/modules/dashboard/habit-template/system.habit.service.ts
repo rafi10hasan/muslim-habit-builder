@@ -36,7 +36,7 @@ const GetAllHabitsWithStatus = async (user: IUser, category?: string) => {
     const topLevelTemplates = await HabitTemplate.find({
         ...templateFilter,
         $or: [{ group: null }, { group: { $exists: false } }],
-        // Connected habit হিসেবে referenced templates বাদ
+        // Exclude templates that are referenced as connected habits
         ...(connectedTemplateIds.size > 0 && {
             _id: { $nin: Array.from(connectedTemplateIds) },
         }),

@@ -574,8 +574,8 @@ export const habitProgressService = {
 // /*
 
 // import { Types } from 'mongoose';
-// import { UserHabit, IUserHabit } from './userHabit.model'; // আপনার পাথ অনুযায়ী দিন
-// import { HabitLog } from './habitLog.model';               // আপনার পাথ অনুযায়ী দিন
+// import { UserHabit, IUserHabit } from './userHabit.model'; // adjust the path as needed
+// import { HabitLog } from './habitLog.model';               // adjust the path as needed
 // import { 
 //   OverallProgress, 
 //   CategoryHabit, 
@@ -584,17 +584,17 @@ export const habitProgressService = {
 //   HabitCategory 
 // } from '@/types/progress.types';
 
-// // হেল্পার: একটি মাসের দিন গুলো জেনারেট করা
+// // Helper: generate the days of a month
 // const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
-// // হেল্পার: ডেট থেকে দিনের নাম বের করা (Mon, Tue...)
+// // Helper: extract the day name from a date (Mon, Tue...)
 // const getDayName = (date: Date): string => {
 //   return date.toLocaleDateString('en-US', { weekday: 'short' });
 // };
 
 // export class ProgressService {
 //   /**
-//    * ওভারঅল প্রগ্রেস বের করার ফাংশন (All Tab)
+//    * Function to calculate overall progress (All Tab)
 //    */
 //   static async getOverallProgress(userId: Types.ObjectId, year: number, month: number): Promise<OverallProgress> {
 //     const habits = await UserHabit.find({ userId, isActive: true });
@@ -612,12 +612,12 @@ export const habitProgressService = {
 //     const today = new Date().getDate();
 //     const passedDays = today <= totalDays ? today : totalDays;
 
-//     // ক্যালেন্ডার থেকে টোটাল কমপ্লিটেড এবং মিসড বের করা
+//     // Calculate total completed and missed items from the calendar
 //     const completedTotal = calendarData.filter(d => d.status === 'completed').length;
 //     const missedTotal = calendarData.filter(d => d.status === 'missed').length;
 //     const percentage = passedDays > 0 ? Math.round((completedTotal / passedDays) * 100) : 0;
 
-//     // ক্যাটাগরি অনুযায়ী ব্রেকডাউন
+//     // Category-wise breakdown
 //     const categoryBreakdown = await this.getCategoryBreakdown(userId, year, month);
 
 //     return {
@@ -630,7 +630,7 @@ export const habitProgressService = {
 //   }
 
 //   /**
-//    * নির্দিষ্ট ক্যাটাগরির নিচের হাবিট গুলোর প্রগ্রেস (Prayer, Quran Tab)
+//    * Progress for habits under a specific category (Prayer, Quran Tab)
 //    */
 //   static async getCategoryHabits(userId: Types.ObjectId, category: HabitCategory, year: number, month: number): Promise<CategoryHabit[]> {
 //     const habits = await UserHabit.find({ userId, category, isActive: true });
@@ -656,16 +656,16 @@ export const habitProgressService = {
 //     const passedDays = today <= totalDays ? today : totalDays;
 
 //     const completedDays = logs.filter(l => l.status === 'Completed').length;
-//     const missedDays = logs.filter(l => l.status === 'Skipped').length; // বা আপনার লজিক অনুযায়ী 'Missed'
+//     const missedDays = logs.filter(l => l.status === 'Skipped').length; // or 'Missed' based on your logic
 //     const percentage = passedDays > 0 ? Math.round((completedDays / passedDays) * 100) : 0;
 
 //     const calendarData = this.buildHabitCalendar(logs, year, month);
 //     const weeklyData = this.calculateWeeklyData(logs, year, month);
     
-//     // স্ট্রিক এবং বেস্ট/কোয়েটেস্ট ডে ক্যালকুলেশন (সহজ ভার্সন)
+//     // Streak and best/quietest day calculation (simple version)
 //     const { bestStreak, bestDays, quietestDays } = this.calculateStreaksAndDays(calendarData, year, month);
     
-//     // এই সপ্তাহের কমপ্লিশন
+//     // Completion for this week
 //     const completionThisWeek = this.calculateCurrentWeekPercentage(logs);
 
 //     return {
@@ -693,13 +693,13 @@ export const habitProgressService = {
 //     for (let i = 1; i <= totalDays; i++) {
 //       const currentDate = new Date(year, month, i);
       
-//       // ভবিষ্যতের দিন
+//       // Future day
 //       if (currentDate > today) {
 //         calendar.push({ date: i, month, year, status: 'future' });
 //         continue;
 //       }
 
-//       // আজকের দিন বা পূর্বের দিনের লগ ফিল্টার করা
+//       // Filter logs for today or earlier days
 //       const dayLogs = logs.filter(l => {
 //         const logDate = new Date(l.date);
 //         return logDate.getDate() === i && logDate.getMonth() === month && logDate.getFullYear() === year;
@@ -749,12 +749,12 @@ export const habitProgressService = {
 //   }
 
 //   private static calculateWeeklyData(logs: any[], year: number, month: number): WeeklyBarData[] {
-//     // সপ্তাহের ৭ দিনের একটি ফরম্যাট তৈরি করা হলো
+//     // Create a 7-day week format
 //     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 //     const totalDays = getDaysInMonth(year, month);
 //     const today = new Date().getDate();
     
-//     // প্রতিদিনের কমপ্লিশন ম্যাপিং
+//     // Day-wise completion mapping
 //     const dayWiseCompletion: Record<string, { completed: number, total: number }> = {};
 
 //     for (let i = 1; i <= (today <= totalDays ? today : totalDays); i++) {
@@ -772,13 +772,13 @@ export const habitProgressService = {
 //       dayWiseCompletion[dayName].total++;
 //     }
 
-//     // শুধুমাত্র ওই দিনগুলো রিটার্ন করা হলো যেগুলো মাসে এসেছে (অথবা আপনি চাইলে সব দিন 0 দিয়ে রাখতে পারেন)
+//     // Return only the days that appear in the month (or keep all days as 0 if you prefer)
 //     return weekDays.map(day => ({
 //       day,
 //       value: dayWiseCompletion[day] && dayWiseCompletion[day].total > 0
 //         ? Math.round((dayWiseCompletion[day].completed / dayWiseCompletion[day].total) * 100)
 //         : 0
-//     })).filter(d => d.value > 0 || true); // true দিয়ে সব দিন দেখানো হচ্ছে
+//     })).filter(d => d.value > 0 || true); // true keeps all days visible
 //   }
 
 //   private static calculateStreaksAndDays(calendarData: DayProgress[], year: number, month: number) {
@@ -804,7 +804,7 @@ export const habitProgressService = {
 //       }
 //     });
 
-//     // বেস্ট এবং কোয়েটেস্ট ডে বের করা
+//     // Determine the best and quietest days
 //     let maxAvg = -1, minAvg = 101;
 //     let bestDays: string[] = [], quietestDays: string[] = [];
     
@@ -838,7 +838,7 @@ export const habitProgressService = {
 //     const weekLogs = logs.filter(l => new Date(l.date) >= startOfWeek);
 //     const completedInWeek = weekLogs.filter(l => l.status === 'Completed').length;
     
-//     // আজ পর্যন্ত কয়টা দিন পার হয়েছে (Sunday=1, Monday=2...)
+//     // Count how many days have passed so far (Sunday=1, Monday=2...)
 //     const daysPassedThisWeek = dayOfWeek + 1; 
     
 //     return daysPassedThisWeek > 0 ? Math.round((completedInWeek / daysPassedThisWeek) * 100) : 0;
@@ -857,7 +857,7 @@ export const habitProgressService = {
       
 //       const logs = await HabitLog.find({ userHabitId: { $in: habitIds }, date: { $gte: startDate, $lte: endDate } });
       
-//       // এখানে সহজ লজিক: মোট কমপ্লিটেড লগ / মোট হাবিট * পার হওয়া দিন
+//       // Simple logic here: total completed logs / total habits * passed days
 //       const today = new Date().getDate();
 //       const passedDays = today <= getDaysInMonth(year, month) ? today : getDaysInMonth(year, month);
 //       const totalPossibleLogs = habits.length * passedDays;

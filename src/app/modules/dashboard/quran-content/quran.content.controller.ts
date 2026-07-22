@@ -18,6 +18,26 @@ const createQuranContentIntoDb = asyncHandler(async (req: Request, res: Response
     });
 });
 
+const updateQuranContentIntoDb = asyncHandler(async (req: Request, res: Response) => {
+     
+    const result = await quranContentService.updateQuranContent(req.params.id as string, req.body);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Quran content has been updated successfully',
+        data: result,
+    });
+});
+
+const deleteQuranContentIntoDb = asyncHandler(async (req: Request, res: Response) => {
+    const result = await quranContentService.deleteQuranContent(req.params.id as string);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Quran content has been deleted successfully',
+        data: result,
+    });
+});
 
 const getSingleQuranContentIntoDb = asyncHandler(async (req: Request, res: Response) => {
 
@@ -98,7 +118,9 @@ export const quranContentController = {
     getQuranContentPreview,
     addVerseInQuranContent,
     reOrderVerseInQuranContent,
+    deleteQuranContentIntoDb,
     deleteVerseImageInQuranContent,
     replaceVerseImageInQuranContent,
-    getQuranContentNames
+    getQuranContentNames,
+    updateQuranContentIntoDb
 };

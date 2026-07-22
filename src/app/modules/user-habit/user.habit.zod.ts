@@ -341,7 +341,7 @@ export const editHabitSchema = z
       .superRefine((val, ctx) => {
         if (!val?.length) return;
 
-        // ইনপুটের ভেতর যেন ডুপ্লিকেট আইডি না থাকে
+        // Ensure the input does not contain duplicate IDs
         if (new Set(val).size !== val.length) {
           ctx.addIssue({
             code: 'custom',
@@ -351,7 +351,7 @@ export const editHabitSchema = z
       }),
   })
   .superRefine((val, ctx) => {
-    // কমপক্ষে একটা field থাকতে হবে
+    // At least one field must be provided
     const hasAnyField = Object.values(val).some(v => v !== undefined);
     if (!hasAnyField) {
       ctx.addIssue({

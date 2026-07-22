@@ -1,11 +1,11 @@
 import { Router } from 'express';
+import { uploadFile } from '../../../../helpers/fileuploader';
+import authMiddleware from '../../../middlewares/auth.middleware';
+import { validateFormDataRequest, validateRequest } from '../../../middlewares/request.validator';
+import { validateFileSizes } from '../../../middlewares/validateFileSize';
+import { USER_ROLE } from '../../user/user.constant';
 import { quranContentController } from './quran.content.controller';
 import quranVerseValidationSchema from './quran.content.zod';
-import authMiddleware from '../../../middlewares/auth.middleware';
-import { uploadFile } from '../../../../helpers/fileuploader';
-import { validateFileSizes } from '../../../middlewares/validateFileSize';
-import { validateFormDataRequest } from '../../../middlewares/request.validator';
-import { USER_ROLE } from '../../user/user.constant';
 
 
 
@@ -20,6 +20,18 @@ quranContentRouter.post(
     quranContentController.createQuranContentIntoDb,
 );
 
+quranContentRouter.patch(
+    '/update/:id',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    validateRequest({body:quranVerseValidationSchema.updateQuranVerseschema}),
+    quranContentController.updateQuranContentIntoDb,
+);
+
+quranContentRouter.delete(
+    '/delete/:id',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    quranContentController.deleteQuranContentIntoDb,
+);
 
 quranContentRouter.get(
     '/:id',

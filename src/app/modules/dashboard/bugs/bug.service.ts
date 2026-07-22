@@ -30,16 +30,16 @@ const getAllBugs = async (query: Record<string, unknown>) => {
                     { $sort: { createdAt: -1 } },
                     { $skip: (Number(page) - 1) * Number(limit) },
                     { $limit: Number(limit) },
-                    // 1. Original Reporter-এর ডেটা User কালেকশন থেকে আনা হচ্ছে
+                    // 1. Load the original reporter data from the User collection
                     {
                         $lookup: {
-                            from: 'users', // আপনার User কালেকশনের আসল নাম দিন (обычно 'users')
+                            from: 'users', // Set this to the actual name of your User collection (usually 'users')
                             localField: 'originalReporter',
                             foreignField: '_id',
                             as: 'reporterInfo'
                         }
                     },
-                    // 2. UpvotedBy অ্যারে-র ডেটা User কালেকশন থেকে আনা হচ্ছে
+                    // 2. Load the upvotedBy array data from the User collection
                     {
                         $lookup: {
                             from: 'users',
@@ -48,14 +48,14 @@ const getAllBugs = async (query: Record<string, unknown>) => {
                             as: 'upvotedByInfo'
                         }
                     },
-                    // reporterInfo অ্যারে-কে অবজেক্টে রূপান্তর করা হচ্ছে
+                    // Convert the reporterInfo array into an object
                     {
                         $unwind: {
                             path: '$reporterInfo',
                             preserveNullAndEmptyArrays: true
                         }
                     },
-                    // ডেটা ফরম্যাটিং এবং রেসপন্স ফ্ল্যাট করা হচ্ছে
+                    // Format the data and flatten the response
                     {
                         $project: {
                             _id: 0,
@@ -64,7 +64,7 @@ const getAllBugs = async (query: Record<string, unknown>) => {
                             status: 1,
                             upvoteCount: 1,
                             createdAt: 1,
-                            // ফ্ল্যাট ফিল্ডস
+                            // Flattened fields
                             originalReporterName: { $ifNull: ['$reporterInfo.fullName', ''] }, 
                         },
                     },
@@ -96,7 +96,7 @@ const getBugDetails = async (bugId: string) => {
         },
         {
             $lookup: {
-                from: 'users', // আপনার User কালেকশনের নাম
+                from: 'users', // Set this to your User collection name
                 localField: 'originalReporter',
                 foreignField: '_id',
                 as: 'reporterInfo'
@@ -126,7 +126,7 @@ const getBugDetails = async (bugId: string) => {
                 upvoteCount: 1,
                 bugImages: { $ifNull: ['$bugImages', []] },
                 createdAt: 1,
-                // ফ্ল্যাট রেসপন্স
+                // Flattened response
                 originalReporterName: { $ifNull: ['$reporterInfo.fullName', ''] },
                 originalReporterEmail: { $ifNull: ['$reporterInfo.email', ''] },
             }
