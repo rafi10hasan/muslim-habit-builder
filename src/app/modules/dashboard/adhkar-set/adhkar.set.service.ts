@@ -1,6 +1,6 @@
 import { BadRequestError, NotFoundError } from "../../../errors/request/apiError";
 import { AdhkarSet } from "./adhkar.set.model";
-import { TAdhakarItemPayload, TAdhakarPayload, TReorderAdhkarItemsByIndexPayload, TUpdateAdhakarItemPayload, TUpdateAdhakarSetPayload } from "./adhkar.set.zod";
+import { TAdhakarItemPayload, TAdhakarPayload, TUpdateAdhakarItemPayload, TUpdateAdhakarSetPayload } from "./adhkar.set.zod";
 
 
 
@@ -16,14 +16,27 @@ const createAdhakar = async (payload: TAdhakarPayload) => {
 
 // 2. Delete the main Adhkar Set completely
 const deleteAdhakarSet = async (setId: string) => {
-    const result = await AdhkarSet.findByIdAndDelete(setId);
-    if (!result) {
+    const adhkar = await AdhkarSet.findById(setId);
+
+    if (!adhkar) {
         throw new NotFoundError('Adhkar set not found');
     }
+
+    adhkar.isDeleted = true;
+    await adhkar.save();
     return null;
 };
 
-
+const getAdhkars = async ()=>{
+    const result = await AdhkarSet.find({isDeleted: false}).select('name _id items');
+    return result.map(item => {
+        return {
+            id: item._id,
+            name: item.name,
+            items: item.items.length
+        }
+    });
+}
 
 const updateAdhakarSet = async (id: string, payload: TUpdateAdhakarSetPayload) => {
     const result = await AdhkarSet.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
@@ -203,5 +216,6 @@ export const adhakarService = {
     reorderAdhkarItemsByIndex,
     getAdhakarPreview,
     getAdhkarSetNames,
+    getAdhkars,
     updateAdhakarSet
 };

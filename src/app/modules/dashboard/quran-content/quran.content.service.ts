@@ -51,6 +51,19 @@ const createQuranContent = async (
     }
 };
 
+// get quran content list
+
+const getQuranContents = async ()=>{
+    const result = await QuranContent.find({isDeleted: false}).select('name _id pages');
+    return result.map(item => {
+        return {
+            id: item._id,
+            name: item.name,
+            pages: item.pages
+        }
+    });
+}
+
 // delete quran content
 const deleteQuranContent = async (id: string) => {
     // 1. Start a Mongoose session
@@ -61,34 +74,35 @@ const deleteQuranContent = async (id: string) => {
 
     try {
         // Find the content (using session is a good practice here)
-        const result = await QuranContent.findById(id).session(session);
+        const quran = await QuranContent.findById(id).session(session);
         
-        if (!result) {
+        if (!quran) {
             throw new NotFoundError("Content not found");
         }
 
-        const deletedImages = result?.images.map(img => img.imageUrl) || [];
+        const deletedImages = quran.images.map(img => img.imageUrl) || [];
 
-        // 3. Delete the document from the database (pass the session)
-        await QuranContent.findByIdAndDelete(id, { session });
-
-        // 4. Delete images from Cloudinary
+        // Delete images from Cloudinary
         await Promise.all(
             deletedImages.map((url) => deleteImageFromCloudinary(url))
         );
+         
+        quran.isDeleted = true;
+        quran.images = [];
 
-        // 5. If everything is successful, commit the transaction
+        await quran.save({session})
+        // If everything is successful, commit the transaction
         await session.commitTransaction();
         
         return null;
 
     } catch (error) {
-        // 6. If any error occurs (DB or Cloudinary), rollback the transaction
+        // If any error occurs (DB or Cloudinary), rollback the transaction
         await session.abortTransaction();
         throw error; // Re-throw the error for the global error handler
         
     } finally {
-        // 7. End the session in the finally block so it always runs
+        // End the session in the finally block so it always runs
         session.endSession();
     }
 };
@@ -331,6 +345,7 @@ export const quranContentService = {
     updateQuranContent,
     getQuranContentPreview,
     addVerse,
+    getQuranContents,
     reorderVerseImages,
     deleteQuranContent,
     deleteVerseImage,

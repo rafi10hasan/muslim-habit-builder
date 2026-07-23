@@ -1238,23 +1238,25 @@ const skippedHabit = async (user: IUser, habitId: string) => {
 
 // get content
 const getDynamicHabitContent = async (user: IUser, contentId: string) => {
-
-    const quranData = await QuranContent.findById(contentId).lean();
-    console.log({ quranData })
-    // 1. Check whether the content is Quran data before parsing further
+    
+    // 1. Check whether the content is Quran data
+    const quranData = await QuranContent.findOne({ _id: contentId, isDeleted: false }).lean();
+    
     if (quranData) {
-        return quranData
+        return quranData;
     }
-    const adhkarData = await AdhkarSet.findById(contentId).lean();
-    console.log({ adhkarData })
+   
     // 2. Check whether the content is an Adhkar set before continuing
+    const adhkarData = await AdhkarSet.findOne({ _id: contentId, isDeleted: false }).lean();
+    
     if (adhkarData) {
-        return adhkarData
+        return adhkarData;
     }
-    console.log("Mongoose registered collection names:", mongoose.connection.modelNames());
+    
     // 3. Standard error logging fallback for unmatched content queries
+    console.log("Mongoose registered collection names:", mongoose.connection.modelNames());
+    
     throw new NotFoundError('Content details not found in either Quran or Adhkar records');
-
 };
 
 export const userHabitService = {

@@ -21,7 +21,7 @@ export interface IAdhkarSet {
 
   totalCount: number;
 
-  isActive: boolean;
+  isDeleted: boolean;
 
   items: IAdhkarItem[];
 

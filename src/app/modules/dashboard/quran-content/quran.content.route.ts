@@ -20,6 +20,12 @@ quranContentRouter.post(
     quranContentController.createQuranContentIntoDb,
 );
 
+quranContentRouter.get(
+    '/list',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    quranContentController.getQuranContentsIntoDb,
+);
+
 quranContentRouter.patch(
     '/update/:id',
     authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),

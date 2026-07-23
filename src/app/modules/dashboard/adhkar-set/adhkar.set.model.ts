@@ -29,9 +29,9 @@ const adhkarSetSchema = new Schema<IAdhkarSet>(
             type: Number,
             default: 0,
         },
-        isActive: {
+        isDeleted: {
             type: Boolean,
-            default: true,
+            default: false,
         },
         items: [adhkarItemSchema],
     },

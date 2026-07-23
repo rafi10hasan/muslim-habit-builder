@@ -23,6 +23,10 @@ const quranContentSchema = new Schema<IQuranContent>(
       required: true,
       min: 0,
     },
+    isDeleted:{
+      type: Boolean,
+      default: false
+    },
     images: [{
       order: {
         type: Number,

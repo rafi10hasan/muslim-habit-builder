@@ -21,6 +21,12 @@ adhkarRouter.post(
     adhakarController.createAdhakarIntoDb
 );
 
+adhkarRouter.get(
+    '/contents',
+    authMiddleware(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    adhakarController.getAdhkarsIntoDb
+);
+
 // 2. Delete a main Adhkar Set completely
 adhkarRouter.delete(
     '/delete/:setId',
