@@ -64,7 +64,7 @@ const deleteQuranContent = async (id: string) => {
         const result = await QuranContent.findById(id).session(session);
         
         if (!result) {
-            throw new Error("Content not found");
+            throw new NotFoundError("Content not found");
         }
 
         const deletedImages = result?.images.map(img => img.imageUrl) || [];
