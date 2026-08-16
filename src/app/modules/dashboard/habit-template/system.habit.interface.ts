@@ -68,8 +68,6 @@ export interface IHabitTemplate {
 
   isGuestLocked: boolean;
 
-  isNew: boolean;
-
   pdfContent: string | null;
 
   infoContent: string | null

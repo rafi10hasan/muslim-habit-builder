@@ -117,11 +117,6 @@ const habitTemplateSchema = new Schema<IHabitTemplate>(
       default: false
     },
 
-    isNew: {
-      type: Boolean,
-      default: false
-    },
-
     isGuestLocked: {
       type: Boolean,
       default: true
